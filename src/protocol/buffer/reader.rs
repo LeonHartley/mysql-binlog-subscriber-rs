@@ -11,6 +11,8 @@ pub trait BufferReader {
     fn read_str_null(&mut self) -> Result<String, IoErr>;
     
     fn read_str_long(&mut self) -> Result<String, IoErr>;
+    
+    fn read_str(&mut self) -> Result<String, IoErr>;
 }
 
 impl BufferReader for Buffer {
@@ -54,6 +56,27 @@ impl BufferReader for Buffer {
         let mut bytes: Vec<u8> = vec!();
         let length = BigEndian::read_i64(&self.data.as_ref()) as usize;
         self.data.advance(8);
+        
+        let data = self.data.as_ref();
+
+        for b in data {
+            if (bytes.len() == length) {
+                break;
+            }
+
+            let byte = *b;            
+            bytes.push(byte);
+        }
+
+        self.data.advance(bytes.len());
+        Ok(String::from_utf8(bytes).unwrap())
+    }
+
+        
+    fn read_str(&mut self) -> Result<String, IoErr> {
+        let mut bytes: Vec<u8> = vec!();
+        let length = BigEndian::read_i32(&self.data.as_ref()) as usize;
+        self.data.advance(4);
         
         let data = self.data.as_ref();
 

@@ -129,3 +129,19 @@ pub fn test_buffer_read_write_str_long() {
 
     assert_eq!("string str string", first_str);
 }
+
+
+
+#[test]
+pub fn test_buffer_read_write_str() {
+    let mut buffer = Buffer::empty()
+        .write_str("string str string".to_string());
+
+    let first_str = if let Ok(string) = buffer.read_str() {
+        string
+    } else {
+        panic!("failed to read string");
+    };
+
+    assert_eq!("string str string", first_str);
+}

@@ -10,6 +10,8 @@ pub trait BufferWriter {
 
     fn write_i16_be(mut self, i: i16) -> Self;
 
+    fn write_str(mut self, data: String) -> Self;
+
     fn write_str_null(mut self, data: String) -> Self;
 
     fn write_str_long(mut self, data: String) -> Self;
@@ -48,6 +50,14 @@ impl BufferWriter for Buffer {
     fn write_str_long(mut self, data: String) -> Self {
         self.data.reserve(data.len() + 8);
         self.data.put_i64_be(data.len() as i64);
+        self.data.put_slice(data.as_bytes());
+
+        self
+    }
+
+    fn write_str(mut self, data: String) -> Self {
+        self.data.reserve(data.len() + 4);
+        self.data.put_i32_be(data.len() as i32);
         self.data.put_slice(data.as_bytes());
 
         self
