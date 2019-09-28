@@ -4,11 +4,15 @@ use bytes::{Bytes, Buf};
 use byteorder::{BigEndian, LittleEndian, ByteOrder};
 
 pub trait BufferReader {
+    fn skip(&mut self, num: usize);
+
     fn read_u8(&mut self) -> Result<u8, IoErr>;
 
     fn read_i32_be(&mut self) -> Result<i32, IoErr>;
 
     fn read_i16_be(&mut self) -> Result<i16, IoErr>;
+
+    fn read_i64_le(&mut self) -> Result<i64, IoErr>;
 
     fn read_i32_le(&mut self) -> Result<i32, IoErr>;
 
@@ -16,12 +20,16 @@ pub trait BufferReader {
 
     fn read_str_null(&mut self) -> Result<String, IoErr>;
     
-    fn read_str_long(&mut self) -> Result<String, IoErr>;
-    
     fn read_str(&mut self) -> Result<String, IoErr>;
+
+    fn read_str_len(&mut self, len: usize) -> Result<String, IoErr>;
 }
 
 impl BufferReader for Buffer {
+    fn skip(&mut self, num: usize) {
+      self.data.advance(num);
+    }
+
     fn read_u8(&mut self) -> Result<u8, IoErr> {
         let data = self.data.as_ref();
         let b = data[0];
@@ -40,6 +48,13 @@ impl BufferReader for Buffer {
     fn read_i16_be(&mut self) -> Result<i16, IoErr> {
         let i = BigEndian::read_i16(&self.data.as_ref());
         self.data.advance(2);
+
+        Ok(i)
+    }
+
+    fn read_i64_le(&mut self) -> Result<i64, IoErr> {
+        let i = LittleEndian::read_i64(&self.data.as_ref());
+        self.data.advance(8);
 
         Ok(i)
     }
@@ -77,28 +92,36 @@ impl BufferReader for Buffer {
         }
 
         self.data.advance(bytes_read);
-        Ok(String::from_utf8(bytes).unwrap())
+        
+        match String::from_utf8(bytes) {
+            Ok(string) => Ok(string),
+            Err(_) => Err(IoErr::ReadErr(format!("error reading str, length={}", bytes_read)))
+        }
     }
     
-    fn read_str_long(&mut self) -> Result<String, IoErr> {
-        let mut bytes: Vec<u8> = vec!();
-        let length = BigEndian::read_i64(&self.data.as_ref()) as usize;
-        self.data.advance(8);
+    // fn read_str_long(&mut self) -> Result<String, IoErr> {
+    //     let mut bytes: Vec<u8> = vec!();
+    //     let length = LittleEndian::read_i64(&self.data.as_ref()) as usize;
+    //     self.data.advance(8);
         
-        let data = self.data.as_ref();
+    //     let data = self.data.as_ref();
 
-        for b in data {
-            if (bytes.len() == length) {
-                break;
-            }
+    //     for b in data {
+    //         if (bytes.len() == length) {
+    //             break;
+    //         }
 
-            let byte = *b;            
-            bytes.push(byte);
-        }
+    //         let byte = *b;            
+    //         bytes.push(byte);
+    //     }
 
-        self.data.advance(bytes.len());
-        Ok(String::from_utf8(bytes).unwrap())
-    }
+    //     self.data.advance(bytes.len());
+        
+    //     match String::from_utf8(bytes) {
+    //         Ok(string) => Ok(string),
+    //         Err(_) => Err(IoErr::ReadErr(format!("error reading str, length={}", length)))
+    //     }
+    // }
 
         
     fn read_str(&mut self) -> Result<String, IoErr> {
@@ -109,7 +132,7 @@ impl BufferReader for Buffer {
         let data = self.data.as_ref();
 
         for b in data {
-            if (bytes.len() == length) {
+            if bytes.len() == length {
                 break;
             }
 
@@ -118,6 +141,26 @@ impl BufferReader for Buffer {
         }
 
         self.data.advance(bytes.len());
-        Ok(String::from_utf8(bytes).unwrap())
+
+        match String::from_utf8(bytes) {
+            Ok(string) => Ok(string),
+            Err(_) => Err(IoErr::ReadErr(format!("error reading str, length={}", length)))
+        }
+    }
+
+    fn read_str_len(&mut self, len: usize) -> Result<String, IoErr> {
+        let mut bytes: Vec<u8> = vec!();
+        let data = self.data.as_ref();
+
+        for i in 0..len {
+            bytes.push(data[i])
+        }
+
+        self.data.advance(bytes.len());
+
+        match String::from_utf8(bytes) {
+            Ok(string) => Ok(string),
+            Err(_) => Err(IoErr::ReadErr(format!("error reading str, length={}", len)))
+        }
     }
 }

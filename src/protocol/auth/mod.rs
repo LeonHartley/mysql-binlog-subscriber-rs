@@ -2,6 +2,7 @@ use super::buffer::{Buffer, writer::BufferWriter, reader::BufferReader};
 use super::encoder::{EncodeErr, Encoder};
 use super::decoder::{DecodeErr, Decoder};
 
+#[derive(Debug)]
 pub struct Handshake {
     protocol_version: u8,
     server_version: String,
@@ -16,47 +17,50 @@ pub struct Handshake {
 
 impl Decoder for Handshake {
     fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
+        buffer.skip(4);
+
         Ok(Box::new(Handshake {
             protocol_version: match buffer.read_u8() {
                 Ok(version) => version,
-                Err(_) => return Err(DecodeErr::Err(String::from("protocol_version")))
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding protocol_version, {:?}", e)))
             },
             server_version: match buffer.read_str_null() {
                 Ok(version) => version,
-                Err(_) => return Err(DecodeErr::Err(String::from("server_version")))
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding server_version, {:?}", e)))
             },
             connection_id: match buffer.read_i32_le() {
                 Ok(id) => id,
-                Err(_) => return Err(DecodeErr::Err(String::from("connection_id")))
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding connection_id, {:?}", e)))
             },
-            auth_plugin_data: match buffer.read_str_long() {
-                Ok(plugin_data) => plugin_data,
-                Err(_) => return Err(DecodeErr::Err(String::from("auth_plugin_data")))
+            auth_plugin_data: match buffer.read_str_len(8) {
+                Ok(plugin_data) => format!("{}", plugin_data),
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding auth_plugin_data, {:?}", e)))
             },
             filter: match buffer.read_u8() {
                 Ok(filter) => filter,
-                Err(_) => return Err(DecodeErr::Err(String::from("filter")))
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding filter, {:?}", e)))
             },
             capability_flag: match buffer.read_i16_le() {
                 Ok(capability_flag) => capability_flag,
-                Err(_) => return Err(DecodeErr::Err(String::from("capability_flag")))
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding capability_flag, {:?}", e)))
             },
             character_set: match buffer.read_u8() {
                 Ok(character_set) => character_set,
-                Err(_) => return Err(DecodeErr::Err(String::from("character_set")))
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding character_set, {:?}", e)))
             },
             status: match buffer.read_i16_le() {
                 Ok(status) => status,
-                Err(_) => return Err(DecodeErr::Err(String::from("status")))
+                Err(e) => return Err(DecodeErr::Err(format!("error decoding status, {:?}", e)))
             },
             capability_flags: match buffer.read_i16_le() {
                 Ok(capability_flags) => capability_flags,
-                Err(_) => return Err(DecodeErr::Err(String::from("capability_flags")))
+                Err(e) => return Err(DecodeErr::Err(format!("error capability_flags character_set, {:?}", e)))
             }
         }))
     }
 }
 
+#[derive(Debug)]
 pub struct HandshakeResponse {
     capability_flags: i32,
     max_packet_size: i32,
