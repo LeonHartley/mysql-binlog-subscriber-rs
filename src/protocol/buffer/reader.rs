@@ -8,7 +8,9 @@ pub trait BufferReader {
 
     fn read_i16_be(&mut self) -> Result<i16, IoErr>;
 
-    fn read_str_null_terminated(&mut self) -> Result<String, IoErr>;
+    fn read_str_null(&mut self) -> Result<String, IoErr>;
+    
+    fn read_str_long(&mut self) -> Result<String, IoErr>;
 }
 
 impl BufferReader for Buffer {
@@ -26,9 +28,9 @@ impl BufferReader for Buffer {
         Ok(i)
     }
 
-    fn read_str_null_terminated(&mut self) -> Result<String, IoErr> {
+    fn read_str_null(&mut self) -> Result<String, IoErr> {
         const NULL: u8 = 0;
-        
+
         let mut bytes_read = 0;
         let mut bytes: Vec<u8> = vec!();
         let data = self.data.as_ref();
@@ -45,6 +47,26 @@ impl BufferReader for Buffer {
         }
 
         self.data.advance(bytes_read);
+        Ok(String::from_utf8(bytes).unwrap())
+    }
+    
+    fn read_str_long(&mut self) -> Result<String, IoErr> {
+        let mut bytes: Vec<u8> = vec!();
+        let length = BigEndian::read_i64(&self.data.as_ref()) as usize;
+        self.data.advance(8);
+        
+        let data = self.data.as_ref();
+
+        for b in data {
+            if (bytes.len() == length) {
+                break;
+            }
+
+            let byte = *b;            
+            bytes.push(byte);
+        }
+
+        self.data.advance(bytes.len());
         Ok(String::from_utf8(bytes).unwrap())
     }
 }
