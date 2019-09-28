@@ -4,15 +4,15 @@ use super::decoder::{DecodeErr, Decoder};
 
 #[derive(Debug)]
 pub struct Handshake {
-    protocol_version: u8,
-    server_version: String,
-    connection_id: i32,
-    auth_plugin_data: String,
-    filter: u8,
-    capability_flag: i16,
-    character_set: u8,
-    status: i16,
-    capability_flags: i16,
+    pub protocol_version: u8,
+    pub server_version: String,
+    pub connection_id: i32,
+    pub auth_plugin_data: String,
+    pub filter: u8,
+    pub capability_flag: i16,
+    pub character_set: u8,
+    pub status: i16,
+    pub capability_flags: i16,
 }
 
 impl Decoder for Handshake {
