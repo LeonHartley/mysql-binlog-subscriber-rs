@@ -102,6 +102,7 @@ pub fn test_buffer_read_write_i16_i32() {
     assert_eq!(1009 as i16, fourth_num);
 }
 
+
 #[test]
 pub fn test_buffer_read_write_str_null() {
     let mut buffer = Buffer::empty()
@@ -116,6 +117,7 @@ pub fn test_buffer_read_write_str_null() {
     assert_eq!("string str string", first_str);
 }
 
+
 #[test]
 pub fn test_buffer_read_write_str_long() {
     let mut buffer = Buffer::empty()
@@ -129,7 +131,6 @@ pub fn test_buffer_read_write_str_long() {
 
     assert_eq!("string str string", first_str);
 }
-
 
 
 #[test]

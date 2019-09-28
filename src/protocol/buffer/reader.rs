@@ -1,12 +1,18 @@
 use super::error::IoErr;
 use super::Buffer;
 use bytes::{Bytes, Buf};
-use byteorder::{BigEndian, ByteOrder};
+use byteorder::{BigEndian, LittleEndian, ByteOrder};
 
 pub trait BufferReader {
+    fn read_u8(&mut self) -> Result<u8, IoErr>;
+
     fn read_i32_be(&mut self) -> Result<i32, IoErr>;
 
     fn read_i16_be(&mut self) -> Result<i16, IoErr>;
+
+    fn read_i32_le(&mut self) -> Result<i32, IoErr>;
+
+    fn read_i16_le(&mut self) -> Result<i16, IoErr>;
 
     fn read_str_null(&mut self) -> Result<String, IoErr>;
     
@@ -16,6 +22,14 @@ pub trait BufferReader {
 }
 
 impl BufferReader for Buffer {
+    fn read_u8(&mut self) -> Result<u8, IoErr> {
+        let data = self.data.as_ref();
+        let b = data[0];
+        
+        self.data.advance(1);
+        Ok(b)
+    }
+
     fn read_i32_be(&mut self) -> Result<i32, IoErr> {
         let i = BigEndian::read_i32(&self.data.as_ref());
         self.data.advance(4);
@@ -25,6 +39,20 @@ impl BufferReader for Buffer {
 
     fn read_i16_be(&mut self) -> Result<i16, IoErr> {
         let i = BigEndian::read_i16(&self.data.as_ref());
+        self.data.advance(2);
+
+        Ok(i)
+    }
+
+    fn read_i32_le(&mut self) -> Result<i32, IoErr> {
+        let i = LittleEndian::read_i32(&self.data.as_ref());
+        self.data.advance(4);
+
+        Ok(i)
+    }
+
+    fn read_i16_le(&mut self) -> Result<i16, IoErr> {
+        let i = LittleEndian::read_i16(&self.data.as_ref());
         self.data.advance(2);
 
         Ok(i)
