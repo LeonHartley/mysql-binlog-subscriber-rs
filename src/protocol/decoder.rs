@@ -1,5 +1,6 @@
 use super::buffer::Buffer;
 
+#[derive(Debug)]
 pub enum DecodeErr {
     Err(String),
 }
