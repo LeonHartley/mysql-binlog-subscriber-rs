@@ -106,7 +106,7 @@ pub fn test_buffer_read_write_i16_i32() {
 #[test]
 pub fn test_buffer_read_write_str_null() {
     let mut buffer = Buffer::empty()
-        .write_str_null("string str string".to_string());
+        .write_str_null(&"string str string".to_string());
 
     let first_str = if let Ok(string) = buffer.read_str_null() {
         string
@@ -121,7 +121,7 @@ pub fn test_buffer_read_write_str_null() {
 #[test]
 pub fn test_buffer_read_write_str_long() {
     let mut buffer = Buffer::empty()
-        .write_str_long("string str string".to_string());
+        .write_str_long(&"string str string".to_string());
 
     let first_str = if let Ok(string) = buffer.read_str_long() {
         string
@@ -136,7 +136,7 @@ pub fn test_buffer_read_write_str_long() {
 #[test]
 pub fn test_buffer_read_write_str() {
     let mut buffer = Buffer::empty()
-        .write_str("string str string".to_string());
+        .write_str(&"string str string".to_string());
 
     let first_str = if let Ok(string) = buffer.read_str() {
         string
