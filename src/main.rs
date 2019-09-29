@@ -9,9 +9,10 @@ pub mod client {
     use super::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
+    use super::protocol::command::query::Query;
 
     pub fn connect() {
-        let username = "root".to_string();
+        let username = "user".to_string();
         let database = "cometsrv".to_string();
 
         match TcpStream::connect("localhost:3306") {
@@ -56,8 +57,42 @@ pub mod client {
                                 match read_buffer(&mut auth_buf) {
                                     Ok(mut msg) => match msg.read_u8() {
                                         Ok(res_type) => match res_type {
-                                            0x00 /*OK*/ => println!("auth OK"),
-                                            0xFE /*CHANGE AUTH PROTOCOL*/ => println!("change auth protocol..."),
+                                            0x00 /*OK*/ => {
+                                                println!("auth ok");
+
+                                                write_message(&mut Query {
+                                                    query: "SHOW MASTER STATUS;".to_string()
+                                                }, &mut stream, 0);
+                                            
+                                                let mut query_res = [0 as u8; 256];
+                                                match stream.read(&mut query_res) {
+                                                    Ok(_) => {
+                                                        let mut query_buf = Buffer::from_bytes(&query_res);
+                                                        println!("{:?}", query_res.to_vec());
+   
+                                                        match read_buffer(&mut query_buf) {
+                                                            Ok(mut msg) => match msg.read_u8() {
+                                                                Ok(b) => match b {
+                                                                    0xFF /*ERROR*/ => match read_generic_message::<MySqlErr>(&mut msg) {
+                                                                        Ok(msg) => println!("ERROR {} {}: {}", msg.code, match msg.state {
+                                                                            Some(state) => format!("({})", state),
+                                                                            None => format!("(unknown)")
+                                                                        }, msg.message),
+                                                                        Err(e) => println!("error parsing error {:?}", e)
+                                                                    },
+                                                                    _ => println!("received response: {:?}", String::from_utf8_lossy(&query_res))
+                                                                }
+                                                                Err(_) => println!("err 0"),
+                                                            },
+                                                            Err(e) => println!("{:?}", e),
+                                                        }
+
+                                                    },
+                                                    Err(_) => {}
+                                                };
+
+                                            },
+                                            0xFE /*EOF, CHANGE AUTH PROTOCOL*/ => println!("change auth protocol..."),
                                             0xFF /*ERROR*/ => match read_generic_message::<MySqlErr>(&mut msg) {
                                                 Ok(msg) => println!("ERROR {} {}: {}", msg.code, match msg.state {
                                                     Some(state) => format!("({})", state),
