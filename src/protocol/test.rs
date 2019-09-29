@@ -2,7 +2,9 @@ use super::*;
 
 use super::buffer::*;
 use super::auth::*;
+use super::auth::*;
 
+use crate::io::reader::read_message;
 
 #[test]
 pub fn test_handshake_decode() {

@@ -6,7 +6,8 @@ pub mod client {
     use std::io::{Read, Write};
 
     use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, decoder::{DecodeErr, Decoder}};
-    use super::io::{writer::write_message, reader::read_message};
+    use super::io::{writer::write_message, reader::read_message, reader::read_generic_message};
+    use super::protocol::error::MySqlErr;
 
     pub fn connect() {
         let username = "root".to_string();
@@ -43,11 +44,15 @@ pub mod client {
                         
                         let mut auth_res = [0 as u8; 128];
                         match stream.read(&mut auth_res) {
-                            Ok(_) => {
-                                println!("auth response: {:?}", String::from_utf8_lossy(&auth_res));
+                            Ok(_) => match auth_res[0] { 
+                                _ => match read_generic_message::<MySqlErr>(&mut buffer) {
+                                    Ok(msg) => println!("{:?}", msg),
+                                    Err(e) => println!("err parsing err {:?}", e)
+                                }, 
+                                0 => println!("{}", String::from_utf8_lossy(&auth_res))
                             },                    
                             Err(e) => {
-                                println!("Failed to receive data: {}", e);
+                                println!("Failed to receive data: {}", e)
                             }
                         }
                     },

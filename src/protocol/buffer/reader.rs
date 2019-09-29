@@ -6,6 +6,8 @@ use byteorder::{BigEndian, LittleEndian, ByteOrder};
 pub trait BufferReader {
     fn skip(&mut self, num: usize);
 
+    fn readable_bytes(&mut self) -> usize; 
+
     fn read_u8(&mut self) -> Result<u8, IoErr>;
 
     fn read_bytes(&mut self, len: usize) -> Result<Vec<u8>, IoErr>;
@@ -132,7 +134,7 @@ impl BufferReader for Buffer {
             bytes_read = bytes_read + 1;
             let byte = *b;
 
-            if (byte == NULL) {
+            if byte == NULL {
                 break;
             }
             
@@ -201,7 +203,8 @@ impl BufferReader for Buffer {
         let data = self.data.as_ref();
 
         for i in 0..len {
-            bytes.push(data[i])
+            let byte = data[i];    
+            bytes.push(byte)
         }
 
         self.data.advance(bytes.len());
@@ -210,5 +213,9 @@ impl BufferReader for Buffer {
             Ok(string) => Ok(string),
             Err(_) => Err(IoErr::ReadErr(format!("error reading str, length={}", len)))
         }
+    }
+
+    fn readable_bytes(&mut self) -> usize {
+        self.data.len()
     }
 }

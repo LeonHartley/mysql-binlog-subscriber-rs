@@ -24,6 +24,8 @@ pub trait BufferWriter {
 
     fn write_i16_le(mut self, i: i16) -> Self;
 
+    fn write_str_no_len(mut self, data: &String) -> Self;
+
     fn write_str(mut self, data: &String) -> Self;
 
     fn write_str_null(mut self, data: &String) -> Self;
@@ -132,4 +134,12 @@ impl BufferWriter for Buffer {
 
         self
     }
+
+    fn write_str_no_len(mut self, data: &String) -> Self {
+        self.data.reserve(data.len());
+        self.data.put_slice(data.as_bytes());
+
+        self
+    }
+
 }

@@ -132,6 +132,20 @@ pub fn test_buffer_read_write_str() {
 }
 
 #[test]
+pub fn test_buffer_read_str_len() {
+    let mut buffer = Buffer::empty()
+        .write_str_no_len(&"string".to_string());
+
+    let first_str = if let Ok(string) = buffer.read_str_len(6) {
+        string
+    } else {
+        panic!("failed to read string");
+    };
+
+    assert_eq!("string", first_str);
+}
+
+#[test]
 pub fn test_buffer_read_write_numbers() {
     let mut buffer = Buffer::empty()
         .write_i32(9001, 3)
