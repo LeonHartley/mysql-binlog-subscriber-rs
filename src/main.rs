@@ -37,6 +37,16 @@ pub mod client {
                             auth_data: vec!{},
                             database: database,
                         }, &mut stream);
+                        
+                        let mut auth_res = [0 as u8; 128];
+                        match stream.read(&mut auth_res) {
+                            Ok(_) => {
+                                println!("auth response: {:?}", auth_res.to_vec());
+                            },                    
+                            Err(e) => {
+                                println!("Failed to receive data: {}", e);
+                            }
+                        }
                     },
                     Err(e) => {
                         println!("Failed to receive data: {}", e);
