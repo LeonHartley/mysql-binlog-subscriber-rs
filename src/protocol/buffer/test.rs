@@ -130,3 +130,33 @@ pub fn test_buffer_read_write_str() {
 
     assert_eq!("string str string", first_str);
 }
+
+#[test]
+pub fn test_buffer_read_write_numbers() {
+    let mut buffer = Buffer::empty()
+        .write_i32(9001, 3)
+        .write_i64(1232, 4)
+        .write_i32(1818, 2);
+
+    let first_num = if let Ok(num) = buffer.read_i32(3) {
+        num
+    } else {
+        panic!("failed to read first num");
+    };
+
+    let second_num = if let Ok(num) = buffer.read_i64(4) {
+        num
+    } else {
+        panic!("failed to read second num");
+    };
+
+    let third_num = if let Ok(num) = buffer.read_i32(2) {
+        num
+    } else {
+        panic!("failed to read third num");
+    };
+
+    assert_eq!(first_num, 9001);
+    assert_eq!(second_num, 1232);
+    assert_eq!(third_num, 1818);
+}

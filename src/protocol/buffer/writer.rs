@@ -44,8 +44,8 @@ impl BufferWriter for Buffer {
 
     fn write_i32(mut self, value: i32, length: usize) -> Self {
         for i in 0..length {
-            let b = 0x000000FF & ((value as u8) >> ((i as u8) << 3));
-            self.data.put_u8(b);
+            let b = 0x000000FF & (value >> (i << 3));
+            self.data.put_u8(b as u8);
         }
 
         self
@@ -53,8 +53,8 @@ impl BufferWriter for Buffer {
 
     fn write_i64(mut self, value: i64, length: usize) -> Self {
         for i in 0..length {
-            let b = 0x00000000000000FF & ((value as u8) >> ((i as u8) << 3));
-            self.data.put_u8(b);
+            let b = 0x00000000000000FF & (value >> (i << 3));
+            self.data.put_u8(b as u8);
         }
 
         self
