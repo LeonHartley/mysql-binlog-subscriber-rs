@@ -19,6 +19,10 @@ impl Buffer {
         }
     }
 
+    pub fn into_bytes(&mut self) -> &[u8] {
+        self.data.as_ref()
+    }
+
     pub fn length(&self) -> usize {
         self.data.len()
     }

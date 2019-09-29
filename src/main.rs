@@ -36,7 +36,7 @@ pub mod client {
                             username: username,
                             auth_data: vec!{},
                             database: database,
-                        });
+                        }, &mut stream);
                     },
                     Err(e) => {
                         println!("Failed to receive data: {}", e);

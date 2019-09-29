@@ -8,6 +8,8 @@ pub trait BufferReader {
 
     fn read_u8(&mut self) -> Result<u8, IoErr>;
 
+    fn read_bytes(&mut self, len: usize) -> Result<Vec<u8>, IoErr>;
+
     fn read_i32_be(&mut self) -> Result<i32, IoErr>;
 
     fn read_i16_be(&mut self) -> Result<i16, IoErr>;
@@ -57,6 +59,19 @@ impl BufferReader for Buffer {
             Ok(n) => Ok(n as i16),
             Err(e) => Err(e)
         }
+    }
+
+    fn read_bytes(&mut self, len: usize) -> Result<Vec<u8>, IoErr> {
+        let mut bytes = vec!{};
+        let data = self.data.as_ref();
+
+        for i in 0..len {
+            bytes.push(data[i]);
+        }
+
+        self.data.advance(len);
+
+        Ok(bytes)
     }
 
     fn skip(&mut self, num: usize) {
