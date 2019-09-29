@@ -9,3 +9,6 @@ pub fn read_message<T: decoder::Decoder>(buffer: &mut buffer::Buffer) -> Result<
         Err(e) => Err(e)
     }
 }
+
+#[cfg(test)]
+pub mod test;

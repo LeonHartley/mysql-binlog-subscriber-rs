@@ -18,6 +18,12 @@ pub trait BufferReader {
 
     fn read_i16_le(&mut self) -> Result<i16, IoErr>;
 
+    fn read_i64(&mut self, len: usize) -> Result<i64, IoErr>;
+
+    fn read_i32(&mut self, len: usize) -> Result<i32, IoErr>;
+
+    fn read_i16(&mut self, len: usize) -> Result<i16, IoErr>;
+
     fn read_str_null(&mut self) -> Result<String, IoErr>;
     
     fn read_str(&mut self) -> Result<String, IoErr>;
@@ -25,7 +31,34 @@ pub trait BufferReader {
     fn read_str_len(&mut self, len: usize) -> Result<String, IoErr>;
 }
 
-impl BufferReader for Buffer {
+impl BufferReader for Buffer {    
+    fn read_i64(&mut self, len: usize) -> Result<i64, IoErr> {
+        let mut result = 0 as u64;
+
+        for i in 0..len {
+            match self.read_u8() {
+                Ok(n) => result |= (n as u64) << (i << 3),
+                Err(e) => return Err(IoErr::ReadErr(format!("failed to read number, length={}, error={:?}", len, e)))
+            };
+        }
+
+        Ok(result as i64)
+    }
+
+    fn read_i32(&mut self, len: usize) -> Result<i32, IoErr> {
+        match self.read_i64(len) {
+            Ok(n) => Ok(n as i32),
+            Err(e) => Err(e)
+        }
+    }
+
+    fn read_i16(&mut self, len: usize) -> Result<i16, IoErr> {
+        match self.read_i64(len) {
+            Ok(n) => Ok(n as i16),
+            Err(e) => Err(e)
+        }
+    }
+
     fn skip(&mut self, num: usize) {
       self.data.advance(num);
     }

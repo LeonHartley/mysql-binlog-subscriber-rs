@@ -17,7 +17,14 @@ pub struct Handshake {
 
 impl Decoder for Handshake {
     fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
-        buffer.skip(4);
+        let length = match buffer.read_i32(3) {
+            Ok(n) => n,
+            Err(e) => return Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
+        };
+
+        let n = buffer.read_u8();
+
+        println!("got length={}", length);
 
         Ok(Box::new(Handshake {
             protocol_version: match buffer.read_u8() {
@@ -28,7 +35,7 @@ impl Decoder for Handshake {
                 Ok(version) => version,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding server_version, {:?}", e)))
             },
-            connection_id: match buffer.read_i32_le() {
+            connection_id: match buffer.read_i32(4) {
                 Ok(id) => id,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding connection_id, {:?}", e)))
             },
@@ -40,7 +47,7 @@ impl Decoder for Handshake {
                 Ok(filter) => filter,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding filter, {:?}", e)))
             },
-            capability_flag: match buffer.read_i16_le() {
+            capability_flag: match buffer.read_i16(2) {
                 Ok(capability_flag) => capability_flag,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding capability_flag, {:?}", e)))
             },
@@ -48,11 +55,11 @@ impl Decoder for Handshake {
                 Ok(character_set) => character_set,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding character_set, {:?}", e)))
             },
-            status: match buffer.read_i16_le() {
+            status: match buffer.read_i16(2) {
                 Ok(status) => status,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding status, {:?}", e)))
             },
-            capability_flags: match buffer.read_i16_le() {
+            capability_flags: match buffer.read_i16(2) {
                 Ok(capability_flags) => capability_flags,
                 Err(e) => return Err(DecodeErr::Err(format!("error capability_flags character_set, {:?}", e)))
             }
