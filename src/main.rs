@@ -3,13 +3,13 @@ pub mod io;
 
 pub mod client {
     use std::net::{TcpStream};
-    use std::io::{Read, Write};
+    use std::io::{Read};
 
     use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader, decoder::{DecodeErr, Decoder}};
     use super::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
-
+    
     pub fn connect() {
         let username = "root".to_string();
         let database = "cometsrv".to_string();
