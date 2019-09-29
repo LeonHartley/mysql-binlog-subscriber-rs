@@ -5,13 +5,13 @@ pub mod client {
     use std::net::{TcpStream};
     use std::io::{Read};
 
-    use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader, decoder::{DecodeErr, Decoder}};
+    use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader};
     use super::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
-    
+
     pub fn connect() {
-        let username = "root".to_string();
+        let username = "user".to_string();
         let database = "cometsrv".to_string();
 
         match TcpStream::connect("localhost:3306") {
@@ -56,12 +56,13 @@ pub mod client {
                                 match read_buffer(&mut auth_buf) {
                                     Ok(mut msg) => match msg.read_u8() {
                                         Ok(res_type) => match res_type {
-                                            0xFF => match read_generic_message::<MySqlErr>(&mut msg) {
+                                            0xFF /*ERROR*/ => match read_generic_message::<MySqlErr>(&mut msg) {
                                                 Ok(msg) => println!("{:?}", msg),
                                                 Err(e) => println!("error parsing error {:?}", e)
                                             },
-                                            0xFE => println!("0xFE"),
-                                            _ => println!("msg {}", res_type),
+                                            0x00 /* OK */ => println!("auth OK"),
+                                            0xFE /*change auth protocol*/ => println!("0xFE"),
+                                            _ => println!("unknown response type, {}", res_type)
                                         } ,
                                         Err(e) => println!("error parsing auth response {:?}", e)
                                     }

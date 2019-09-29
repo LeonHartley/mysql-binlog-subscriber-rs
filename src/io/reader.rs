@@ -7,7 +7,7 @@ pub fn read_buffer(buffer: &mut Buffer) -> Result<Buffer, DecodeErr> {
         Err(e) => return Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
     };
 
-    let sequence = match buffer.read_u8() {
+    let _sequence = match buffer.read_u8() {
         Ok(seq) => seq,
         Err(e) => return Err(DecodeErr::Err(format!("failed to decode sequence, {:?}", e)))
     };
@@ -16,7 +16,7 @@ pub fn read_buffer(buffer: &mut Buffer) -> Result<Buffer, DecodeErr> {
         Err(DecodeErr::Err(format!("failed to decode message, length={}", length)))
     } else {
         match buffer.read_bytes(length as usize) {
-            Ok(mut bytes) => {
+            Ok(bytes) => {
                 Ok(Buffer::from_bytes(bytes.as_ref()))
             },
             Err(e) => Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
