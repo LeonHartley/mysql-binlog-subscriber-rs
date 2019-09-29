@@ -6,6 +6,8 @@ use byteorder::{BigEndian, LittleEndian, ByteOrder};
 pub trait BufferReader {
     fn skip(&mut self, num: usize);
 
+    fn peak(&mut self) -> u8;
+
     fn readable_bytes(&mut self) -> usize; 
 
     fn read_u8(&mut self) -> Result<u8, IoErr>;
@@ -35,7 +37,7 @@ pub trait BufferReader {
     fn read_str_len(&mut self, len: usize) -> Result<String, IoErr>;
 }
 
-impl BufferReader for Buffer {    
+impl BufferReader for Buffer {  
     fn read_i64(&mut self, len: usize) -> Result<i64, IoErr> {
         let mut result = 0 as u64;
 
@@ -77,7 +79,12 @@ impl BufferReader for Buffer {
     }
 
     fn skip(&mut self, num: usize) {
-      self.data.advance(num);
+        self.data.advance(num);
+    }
+
+    fn peak(&mut self) -> u8 {
+        let data = self.data.as_ref();
+        data[0]
     }
 
     fn read_u8(&mut self) -> Result<u8, IoErr> {

@@ -9,13 +9,22 @@ pub fn read_message<T: Decoder>(buffer: &mut Buffer) -> Result<Box<T>, DecodeErr
         Err(e) => return Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
     };
 
-    let _n = buffer.read_u8();
+    let sequence = buffer.read_u8();
 
     println!("got length={}", length);
 
-    match T::decode(buffer) {
-        Ok(decoded) => Ok(decoded),
-        Err(e) => Err(e)
+    if length <= 0 {
+        Err(DecodeErr::Err(format!("failed to decode message, length={}", length)))
+    } else {
+        match buffer.read_bytes(length as usize) {
+            Ok(bytes) => {
+                match T::decode(&mut Buffer::from_bytes(bytes.as_ref())) {
+                    Ok(decoded) => Ok(decoded),
+                    Err(e) => return Err(e)
+                }
+            }, 
+            Err(e) => Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
+        }
     }
 }
 

@@ -5,7 +5,7 @@ pub mod client {
     use std::net::{TcpStream};
     use std::io::{Read, Write};
 
-    use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, decoder::{DecodeErr, Decoder}};
+    use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader, decoder::{DecodeErr, Decoder}};
     use super::io::{writer::write_message, reader::read_message, reader::read_generic_message};
     use super::protocol::error::MySqlErr;
 
@@ -40,16 +40,16 @@ pub mod client {
                             username: username,
                             auth_data: vec!{},
                             database: database,
-                        }, &mut stream);
+                        }, &mut stream, 1);
                         
                         let mut auth_res = [0 as u8; 128];
                         match stream.read(&mut auth_res) {
-                            Ok(_) => match auth_res[0] { 
-                                _ => match read_generic_message::<MySqlErr>(&mut buffer) {
+                            Ok(_) => {
+                                let mut auth_buf = Buffer::from_bytes(&auth_res);
+                                match read_message::<MySqlErr>(&mut auth_buf) {
                                     Ok(msg) => println!("{:?}", msg),
-                                    Err(e) => println!("err parsing err {:?}", e)
-                                }, 
-                                0 => println!("{}", String::from_utf8_lossy(&auth_res))
+                                    Err(e) => println!("err parsing {:?}", e)
+                                }
                             },                    
                             Err(e) => {
                                 println!("Failed to receive data: {}", e)
