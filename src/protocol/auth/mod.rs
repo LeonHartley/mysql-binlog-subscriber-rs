@@ -2,6 +2,8 @@ use super::buffer::{Buffer, writer::BufferWriter, reader::BufferReader};
 use super::encoder::{EncodeErr, Encoder};
 use super::decoder::{DecodeErr, Decoder};
 
+pub mod capabilities;
+
 #[derive(Debug)]
 pub struct Handshake {
     pub protocol_version: u8,
@@ -16,16 +18,7 @@ pub struct Handshake {
 }
 
 impl Decoder for Handshake {
-    fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
-        let length = match buffer.read_i32(3) {
-            Ok(n) => n,
-            Err(e) => return Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
-        };
-
-        let n = buffer.read_u8();
-
-        println!("got length={}", length);
-
+    fn decode(buffer: &mut BufferReader) -> Result<Box<Self>, DecodeErr> {
         Ok(Box::new(Handshake {
             protocol_version: match buffer.read_u8() {
                 Ok(version) => version,
@@ -40,7 +33,7 @@ impl Decoder for Handshake {
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding connection_id, {:?}", e)))
             },
             auth_plugin_data: match buffer.read_str_len(8) {
-                Ok(plugin_data) => format!("{}", plugin_data),
+                Ok(plugin_data) => plugin_data,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding auth_plugin_data, {:?}", e)))
             },
             filter: match buffer.read_u8() {
@@ -69,24 +62,24 @@ impl Decoder for Handshake {
 
 #[derive(Debug)]
 pub struct HandshakeResponse {
-    capability_flags: i32,
-    max_packet_size: i32,
-    character_set: u8,
-    reserved: String,
-    username: String,
-    auth_data: Vec<u8>,
-    database: String
+    pub capability_flags: u32,
+    pub max_packet_size: i32,
+    pub character_set: u8,
+    pub reserved: Vec<u8>,
+    pub username: String,
+    pub auth_data: Vec<u8>,
+    pub database: String
 }
 
 impl Encoder for HandshakeResponse {
     fn encode(&mut self) -> Result<Buffer, EncodeErr> {
         Ok(Buffer::empty()
-            .write_i32_le(self.capability_flags)
-            .write_i32_le(self.max_packet_size)
+            .write_i32(self.capability_flags as i32, 4)
+            .write_i32(self.max_packet_size, 4)
             .write_u8(self.character_set)
-            .write_str(&self.reserved)
-            .write_str(&self.username)
+            .write_bytes(&self.reserved)
+            .write_str_null(&self.username)
             .write_bytes(&self.auth_data)
-            .write_str(&self.database))
+            .write_str_null(&self.database))
     }
 }

@@ -19,7 +19,7 @@ impl Buffer {
         }
     }
 
-    pub fn length(mut self) -> usize {
+    pub fn length(&self) -> usize {
         self.data.len()
     }
 }

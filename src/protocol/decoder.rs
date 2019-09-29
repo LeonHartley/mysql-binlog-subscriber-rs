@@ -1,4 +1,4 @@
-use super::buffer::Buffer;
+use super::buffer::reader::BufferReader;
 
 #[derive(Debug)]
 pub enum DecodeErr {
@@ -6,5 +6,5 @@ pub enum DecodeErr {
 }
 
 pub trait Decoder {
-    fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr>;
+    fn decode(buffer: &mut BufferReader) -> Result<Box<Self>, DecodeErr>;
 }
