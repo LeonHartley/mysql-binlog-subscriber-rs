@@ -5,7 +5,7 @@ use byteorder::{BigEndian, LittleEndian, ByteOrder};
 pub trait BufferReader {
     fn skip(&mut self, num: usize);
 
-    fn peak(&mut self) -> u8;
+    fn peek(&mut self) -> u8;
 
     fn readable_bytes(&mut self) -> usize; 
 
@@ -81,7 +81,7 @@ impl BufferReader for Buffer {
         self.data.advance(num);
     }
 
-    fn peak(&mut self) -> u8 {
+    fn peek(&mut self) -> u8 {
         let data = self.data.as_ref();
         data[0]
     }
