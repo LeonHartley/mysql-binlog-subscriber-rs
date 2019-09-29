@@ -3,7 +3,7 @@ use std::io::{Write};
 use crate::protocol::buffer::{Buffer, reader::BufferReader, writer::BufferWriter};
 use crate::protocol::decoder::{Decoder, DecodeErr};
 
-pub fn read_message<T: Decoder>(buffer: &mut Buffer) -> Result<Box<T>, DecodeErr> {
+pub fn read_buffer(buffer: &mut Buffer) -> Result<Buffer, DecodeErr> {
     let length = match buffer.read_i32(3) {
         Ok(n) => n,
         Err(e) => return Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
@@ -11,20 +11,27 @@ pub fn read_message<T: Decoder>(buffer: &mut Buffer) -> Result<Box<T>, DecodeErr
 
     let sequence = buffer.read_u8();
 
-    println!("got length={}", length);
-
     if length <= 0 {
         Err(DecodeErr::Err(format!("failed to decode message, length={}", length)))
     } else {
         match buffer.read_bytes(length as usize) {
-            Ok(bytes) => {
-                match T::decode(&mut Buffer::from_bytes(bytes.as_ref())) {
-                    Ok(decoded) => Ok(decoded),
-                    Err(e) => return Err(e)
-                }
-            }, 
+            Ok(mut bytes) => {
+                Ok(Buffer::from_bytes(bytes.as_ref()))
+            },
             Err(e) => Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
         }
+    }
+}
+
+pub fn read_message<T: Decoder>(buffer: &mut Buffer) -> Result<Box<T>, DecodeErr> {
+    match read_buffer(buffer) {
+        Ok(mut bytes) => {
+            match T::decode(&mut bytes) {
+                Ok(decoded) => Ok(decoded),
+                Err(e) => return Err(e)
+            }
+        }, 
+        Err(e) => Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
     }
 }
 
