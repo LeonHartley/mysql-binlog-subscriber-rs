@@ -16,7 +16,7 @@ impl Decoder for MySqlErr {
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding error code, {:?}", e)))
             },
             state: {
-                buffer.skip(2); 
+                buffer.skip(1); 
                 
                 match buffer.read_str_len(5) {
                     Ok(code) => Some(code),
