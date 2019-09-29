@@ -3,9 +3,9 @@ use super::decoder::{DecodeErr, Decoder};
 
 #[derive(Debug)]
 pub struct MySqlErr {
-    code: i16,
-    state: Option<String>,
-    message: String,
+    pub code: i16,
+    pub state: Option<String>,
+    pub message: String,
 }
 
 impl Decoder for MySqlErr {

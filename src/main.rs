@@ -11,7 +11,7 @@ pub mod client {
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
 
     pub fn connect() {
-        let username = "user".to_string();
+        let username = "root".to_string();
         let database = "cometsrv".to_string();
 
         match TcpStream::connect("localhost:3306") {
@@ -56,13 +56,16 @@ pub mod client {
                                 match read_buffer(&mut auth_buf) {
                                     Ok(mut msg) => match msg.read_u8() {
                                         Ok(res_type) => match res_type {
+                                            0x00 /*OK*/ => println!("auth OK"),
+                                            0xFE /*CHANGE AUTH PROTOCOL*/ => println!("change auth protocol..."),
                                             0xFF /*ERROR*/ => match read_generic_message::<MySqlErr>(&mut msg) {
-                                                Ok(msg) => println!("{:?}", msg),
+                                                Ok(msg) => println!("ERROR {} {}: {}", msg.code, match msg.state {
+                                                    Some(state) => format!("({})", state),
+                                                    None => format!("(unknown)")
+                                                }, msg.message),
                                                 Err(e) => println!("error parsing error {:?}", e)
                                             },
-                                            0x00 /* OK */ => println!("auth OK"),
-                                            0xFE /*change auth protocol*/ => println!("0xFE"),
-                                            _ => println!("unknown response type, {}", res_type)
+                                            _ => println!("unknown response type, {}", res_type),
                                         } ,
                                         Err(e) => println!("error parsing auth response {:?}", e)
                                     }
