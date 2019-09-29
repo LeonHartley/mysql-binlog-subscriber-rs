@@ -1,9 +1,12 @@
 pub mod protocol;
+pub mod io;
+
 pub mod client {
     use std::net::{TcpStream};
     use std::io::{Read, Write};
 
-    use super::protocol::{read_message, write_message, auth::{Handshake, HandshakeResponse}, buffer::Buffer, decoder::{DecodeErr, Decoder}};
+    use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, decoder::{DecodeErr, Decoder}};
+    use super::io::{writer::write_message, reader::read_message};
 
     pub fn connect() {
         let username = "root".to_string();
@@ -26,7 +29,7 @@ pub mod client {
                         };
 
                         println!("mysql handshake received\n{:?}", msg);
-                        println!("attemtping authentication, username={}", username);
+                        println!("attempting authentication, username={}", username);
 
                         write_message(&mut HandshakeResponse {
                             capability_flags: 0,
@@ -41,7 +44,7 @@ pub mod client {
                         let mut auth_res = [0 as u8; 128];
                         match stream.read(&mut auth_res) {
                             Ok(_) => {
-                                println!("auth response: {:?}", auth_res.to_vec());
+                                println!("auth response: {:?}", String::from_utf8_lossy(&auth_res));
                             },                    
                             Err(e) => {
                                 println!("Failed to receive data: {}", e);
