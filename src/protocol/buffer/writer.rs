@@ -5,6 +5,10 @@ use byteorder::{BigEndian, LittleEndian, ByteOrder};
 
 pub trait BufferWriter {
     fn write_bytes(mut self, bytes: &Vec<u8>) -> Self;
+    
+    fn write_i32(mut self, i: i32, length: usize) -> Self;
+
+    fn write_i64(mut self, i: i64, length: usize) -> Self;
 
     fn write_u8(mut self, b: u8) -> Self;
 
@@ -33,6 +37,24 @@ impl BufferWriter for Buffer {
 
         for byte in bytes {
             self.data.put_u8(*byte);
+        }
+
+        self
+    }
+
+    fn write_i32(mut self, value: i32, length: usize) -> Self {
+        for i in 0..length {
+            let b = 0x000000FF & ((value as u8) >> ((i as u8) << 3));
+            self.data.put_u8(b);
+        }
+
+        self
+    }
+
+    fn write_i64(mut self, value: i64, length: usize) -> Self {
+        for i in 0..length {
+            let b = 0x00000000000000FF & ((value as u8) >> ((i as u8) << 3));
+            self.data.put_u8(b);
         }
 
         self

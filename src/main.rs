@@ -12,7 +12,7 @@ pub mod client {
             Ok(mut stream) => {
                 println!("connected to mysql server on port 3306");
 
-                let mut data = [0 as u8; 3];
+                let mut data = [0 as u8; 128];
                 match stream.read(&mut data) {
                     Ok(_) => {
                         println!("{:?}", data.to_vec());
@@ -25,7 +25,7 @@ pub mod client {
                             }
                         };
 
-                        println!("mysql handshake received, protocol_version={}, server_version={}, charset: {}\n\n{:?}", msg.protocol_version, msg.server_version, msg.character_set, msg);
+                        println!("mysql handshake received\n{:?}", msg);
                         println!("attemtping authentication, username={}", username);;
                     },
                     Err(e) => {

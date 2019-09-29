@@ -20,4 +20,5 @@ pub fn test_handshake_decode() {
     assert_eq!(msg.connection_id, 42);
     assert_eq!(msg.auth_plugin_data, "l]l)&~m\'");
     assert_eq!(msg.filter, 0);
+    assert_eq!(msg.character_set, 33);
 }
