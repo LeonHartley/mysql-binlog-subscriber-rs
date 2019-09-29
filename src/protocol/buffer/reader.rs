@@ -1,6 +1,5 @@
 use super::error::IoErr;
 use super::Buffer;
-use bytes::{Bytes, Buf};
 use byteorder::{BigEndian, LittleEndian, ByteOrder};
 
 pub trait BufferReader {

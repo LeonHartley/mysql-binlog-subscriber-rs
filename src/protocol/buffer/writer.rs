@@ -1,36 +1,34 @@
-use super::error::IoErr;
 use super::Buffer;
-use bytes::{BufMut, BytesMut};
-use byteorder::{BigEndian, LittleEndian, ByteOrder};
+use bytes::BufMut;
 
 pub trait BufferWriter {
-    fn write_bytes(mut self, bytes: &Vec<u8>) -> Self;
+    fn write_bytes(self, bytes: &Vec<u8>) -> Self;
     
-    fn write_i32(mut self, i: i32, length: usize) -> Self;
+    fn write_i32(self, i: i32, length: usize) -> Self;
 
-    fn write_i64(mut self, i: i64, length: usize) -> Self;
+    fn write_i64(self, i: i64, length: usize) -> Self;
 
-    fn write_u8(mut self, b: u8) -> Self;
+    fn write_u8(self, b: u8) -> Self;
 
-    fn write_i64_be(mut self, i: i64) -> Self;
+    fn write_i64_be(self, i: i64) -> Self;
 
-    fn write_i32_be(mut self, i: i32) -> Self;
+    fn write_i32_be(self, i: i32) -> Self;
 
-    fn write_i16_be(mut self, i: i16) -> Self;
+    fn write_i16_be(self, i: i16) -> Self;
     
-    fn write_i64_le(mut self, i: i64) -> Self;
+    fn write_i64_le(self, i: i64) -> Self;
 
-    fn write_i32_le(mut self, i: i32) -> Self;
+    fn write_i32_le(self, i: i32) -> Self;
 
-    fn write_i16_le(mut self, i: i16) -> Self;
+    fn write_i16_le(self, i: i16) -> Self;
 
-    fn write_str_no_len(mut self, data: &String) -> Self;
+    fn write_str_no_len(self, data: &String) -> Self;
 
-    fn write_str(mut self, data: &String) -> Self;
+    fn write_str(self, data: &String) -> Self;
 
-    fn write_str_null(mut self, data: &String) -> Self;
+    fn write_str_null(self, data: &String) -> Self;
 
-    fn write_str_long(mut self, data: &String) -> Self;
+    fn write_str_long(self, data: &String) -> Self;
 }
 
 impl BufferWriter for Buffer {

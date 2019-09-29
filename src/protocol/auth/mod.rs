@@ -18,7 +18,7 @@ pub struct Handshake {
 }
 
 impl Decoder for Handshake {
-    fn decode(buffer: &mut BufferReader) -> Result<Box<Self>, DecodeErr> {
+    fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
         Ok(Box::new(Handshake {
             protocol_version: match buffer.read_u8() {
                 Ok(version) => version,

@@ -1,6 +1,4 @@
-use std::net::TcpStream;
-use std::io::{Write};
-use crate::protocol::buffer::{Buffer, reader::BufferReader, writer::BufferWriter};
+use crate::protocol::buffer::{Buffer, reader::BufferReader};
 use crate::protocol::decoder::{Decoder, DecodeErr};
 
 pub fn read_message<T: Decoder>(buffer: &mut Buffer) -> Result<Box<T>, DecodeErr> {
@@ -9,9 +7,12 @@ pub fn read_message<T: Decoder>(buffer: &mut Buffer) -> Result<Box<T>, DecodeErr
         Err(e) => return Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))
     };
 
-    let sequence = buffer.read_u8();
+    let sequence = match buffer.read_u8() {
+        Ok(seq) => seq,
+        Err(e) => return Err(DecodeErr::Err(format!("failed to decode sequence, {:?}", e)))
+    };
 
-    println!("got length={}", length);
+    println!("got length={}, sequence={}", length, sequence);
 
     if length <= 0 {
         Err(DecodeErr::Err(format!("failed to decode message, length={}", length)))

@@ -1,6 +1,4 @@
-use byteorder::BigEndian;
-use bytes::{BufMut, BytesMut};
-use bytes::ByteOrder;
+use bytes::BytesMut;
 
 pub struct Buffer {
     data: BytesMut

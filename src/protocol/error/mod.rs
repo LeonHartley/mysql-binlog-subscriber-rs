@@ -9,7 +9,7 @@ pub struct MySqlErr {
 }
 
 impl Decoder for MySqlErr {
-    fn decode(buffer: &mut BufferReader) -> Result<Box<Self>, DecodeErr> {
+    fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
         Ok(Box::new(MySqlErr {
             code: match buffer.read_i16(2) {
                 Ok(code) => code,

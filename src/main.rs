@@ -3,12 +3,12 @@ pub mod io;
 
 pub mod client {
     use std::net::{TcpStream};
-    use std::io::{Read, Write};
+    use std::io::{Read};
 
-    use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader, decoder::{DecodeErr, Decoder}};
-    use super::io::{writer::write_message, reader::read_message, reader::read_generic_message};
+    use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer};
+    use super::io::{writer::write_message, reader::read_message};
     use super::protocol::error::MySqlErr;
-    use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB};
+    use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41, CLIENT_LONG_FLAG, CLIENT_CONNECT_WITH_DB};
 
     pub fn connect() {
         let username = "root".to_string();
