@@ -79,6 +79,7 @@ impl Encoder for HandshakeResponse {
             .write_u8(self.character_set)
             .write_bytes(&self.reserved)
             .write_str_null(&self.username)
+            .write_i32(0, 1)
             .write_bytes(&self.auth_data)
             .write_str_null(&self.database))
     }

@@ -8,6 +8,7 @@ pub mod client {
     use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader, decoder::{DecodeErr, Decoder}};
     use super::io::{writer::write_message, reader::read_message, reader::read_generic_message};
     use super::protocol::error::MySqlErr;
+    use super::protocol::auth::capabilities::*;
 
     pub fn connect() {
         let username = "root".to_string();
@@ -33,7 +34,7 @@ pub mod client {
                         println!("attempting authentication, username={}", username);
 
                         write_message(&mut HandshakeResponse {
-                            capability_flags: 0,
+                            capability_flags: CLIENT_PROTOCOL_41 | CLIENT_LONG_FLAG | CLIENT_CONNECT_WITH_DB,
                             max_packet_size: 0,
                             character_set: msg.character_set,
                             reserved: vec!{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},

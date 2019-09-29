@@ -15,15 +15,13 @@ impl Decoder for MySqlErr {
                 Ok(code) => code,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding error code, {:?}", e)))
             },
-            state: match buffer.peak() {
-                b'#' => {
-                    buffer.skip(1);
-                    match buffer.read_str_len(5) {
-                        Ok(code) => Some(code),
-                        Err(e) => return Err(DecodeErr::Err(format!("error decoding error state, {:?}", e)))
-                    }
-                },
-                _=> None
+            state: {
+                buffer.skip(2); 
+                
+                match buffer.read_str_len(5) {
+                    Ok(code) => Some(code),
+                    Err(e) => return Err(DecodeErr::Err(format!("error decoding error state, {:?}", e)))
+                }
             },
             message: {
                 let len = buffer.readable_bytes();
