@@ -13,7 +13,7 @@ pub struct ResultSetRow {
 
 impl Decoder for ResultSet {
     fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
-        let mut rows = vec!{};
+        let rows = vec!{};
         println!("lol??? {}, {:?}", buffer.readable_bytes(), buffer.read_u8());
         while buffer.readable_bytes() > 1 {
             let length = if let Ok(len) = buffer.read_packed_i64() {

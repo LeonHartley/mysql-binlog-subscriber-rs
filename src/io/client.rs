@@ -2,9 +2,8 @@ use std::net::{TcpStream};
 use std::io::{Read};
 use crate::protocol::{encoder::Encoder, decoder::Decoder};
 use crate::protocol::response::Response;
-use crate::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader};
-use crate::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
-use crate::protocol::command::query::Query;
+use crate::protocol::{buffer::Buffer, buffer::reader::BufferReader};
+use crate::io::{writer::write_message, reader::read_generic_message, reader::read_buffer};
 use crate::protocol::error::MySqlErr;
 
 

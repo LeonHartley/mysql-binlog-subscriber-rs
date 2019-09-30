@@ -23,7 +23,7 @@ pub struct AuthOk {
 }
 
 impl Decoder for AuthOk {
-    fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
+    fn decode(_: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
         Ok(Box::new(AuthOk{}))
     }
 }
