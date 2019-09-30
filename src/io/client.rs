@@ -31,11 +31,10 @@ impl MySqlClient for TcpStream {
             query: query
         }, self, 0);
     
-        let mut bytes = [0 as u8; 256];      
-   
+        let mut bytes = [0 as u8; 1024*10];      
         let query_response = match self.read(&mut bytes) {
             Ok(_) => {
-                println!("stream read: {:?}", bytes.to_vec());
+                // println!("stream read: {:?}", bytes.to_vec());
                 let mut buffer = Buffer::from_bytes(&bytes);
                 let statement_res = read_response::<StatementStatus>(&mut buffer);
 
@@ -69,7 +68,8 @@ impl MySqlClient for TcpStream {
         
         match query_response {
             QueryResponse::Ok(mut res) => Res::parse(&mut res),
-            _ => QueryResult::Err(format!("error reading result data"))
+            QueryResponse::Err(e) => QueryResult::Err(format!("error reading result data, {:?}", e)),
+            QueryResponse::InternalErr(e) => QueryResult::Err(format!("internal error reading result data, {}", e))
         }
     }
 }
