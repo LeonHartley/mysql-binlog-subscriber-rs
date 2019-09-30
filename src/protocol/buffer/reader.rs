@@ -31,12 +31,44 @@ pub trait BufferReader {
 
     fn read_str_null(&mut self) -> Result<String, IoErr>;
     
+    fn read_packed_i64(&mut self) -> Result<i64, IoErr>;
+
     fn read_str(&mut self) -> Result<String, IoErr>;
 
     fn read_str_len(&mut self, len: usize) -> Result<String, IoErr>;
 }
 
 impl BufferReader for Buffer {  
+    fn read_packed_i64(&mut self) -> Result<i64, IoErr> {
+        let i = match self.read_u8() {
+            Ok(b) => b,
+            Err(e) => return Err(e)
+        };
+
+        if i < 251 {
+            Ok(i as i64)
+        } else if i == 251 {
+            Ok(-1)
+        } else if i == 252 {
+            match self.read_i64(2) {            
+                Ok(b) => Ok(b),
+                 Err(e) => return Err(e)
+            }
+        } else if i == 253 {
+            match self.read_i64(3) {            
+                Ok(b) => Ok(b),
+                Err(e) => return Err(e)
+            }
+        } else if i == 254 {
+            match self.read_i64(8) {            
+                Ok(b) => Ok(b),
+                Err(e) => return Err(e)
+            }
+        } else {
+            Err(IoErr::ReadErr(format!("failed to read packed number, i = {}", i)))
+        }
+    }
+
     fn read_i64(&mut self, len: usize) -> Result<i64, IoErr> {
         let mut result = 0 as u64;
 

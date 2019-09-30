@@ -9,11 +9,11 @@ use crate::protocol::error::MySqlErr;
 
 
 pub trait MySqlClient {
-    fn sql_msg<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res>;
+    fn send<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res>;
 }
 
 impl MySqlClient for TcpStream {
-    fn sql_msg<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res> {
+    fn send<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res> {
         write_message(msg, self, sequence);
     
         let mut query_res = [0 as u8; 256];
@@ -29,11 +29,11 @@ impl MySqlClient for TcpStream {
                                 Ok(msg) => Response::Err(msg),
                                 Err(e) => Response::InternalErr(format!("Error reading error response, {:?}", e)),
                             },
-                            0x00 /*OK*/ => match read_generic_message::<Res>(&mut msg) {
+                            0xFE /*EOF*/ => Response::Eof,
+                            _ /*OK*/ => match read_generic_message::<Res>(&mut msg) {
                                 Ok(msg) => Response::Ok(msg),
                                 Err(e) => Response::InternalErr(format!("Error reading ok response, {:?}", e)),
-                            },
-                            _ => Response::InternalErr(format!("unknown response type"))
+                            }
                         }
                         Err(e) => Response::InternalErr(format!("Error reading response type, {:?}", e)),
                     },

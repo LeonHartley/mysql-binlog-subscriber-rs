@@ -5,7 +5,7 @@ pub mod client {
     use std::net::{TcpStream};
     use std::io::{Read};
 
-    use super::protocol::{auth::{Handshake, HandshakeResponse, AuthOk}, buffer::Buffer, buffer::reader::BufferReader};
+    use super::protocol::{auth::{Handshake, HandshakeResponse, AuthOk}, result::ResultSet, buffer::Buffer, buffer::reader::BufferReader};
     use super::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
     use super::protocol::command::query::Query;
     use super::protocol::error::MySqlErr;
@@ -37,7 +37,7 @@ pub mod client {
                         println!("mysql handshake received\n{:?}", msg);
                         println!("attempting authentication, username={}", username);
 
-                        let auth_res = stream.sql_msg::<HandshakeResponse, AuthOk>( &mut HandshakeResponse {
+                        let auth_res = stream.send::<HandshakeResponse, AuthOk>( &mut HandshakeResponse {
                             capability_flags: 
                                 CLIENT_PROTOCOL_41 | 
                                 CLIENT_LONG_FLAG | 
@@ -55,7 +55,7 @@ pub mod client {
                             Response::Ok(_) => {
                                 println!("auth ok");
 
-                                match stream.sql_msg::<Query, MySqlErr>(&mut Query {
+                                match stream.send::<Query, ResultSet>(&mut Query {
                                     query: "SHOW MASTER STATUS;".to_string()
                                 }, 0) {
                                     Response::Ok(m) => println!("top kek"),
@@ -64,14 +64,14 @@ pub mod client {
                                     Response::Eof => println!("got eof")
                                 };  
 
-                                match stream.sql_msg::<Query, MySqlErr>(&mut Query {
-                                    query: "TOP FUCKIN KEK;".to_string()
-                                }, 0) {
-                                    Response::Ok(m) => println!("top kek"),
-                                    Response::Err(e) => println!("Error executing query: {}", format_err(&e)),
-                                    Response::InternalErr(e) => println!("got {}", e),
-                                    Response::Eof => println!("got eof")
-                                };  
+                                // match stream.send::<Query, ResultSet>(&mut Query {
+                                //     query: "TOP FUCKIN KEK;".to_string()
+                                // }, 0) {
+                                //     Response::Ok(m) => println!("top kek"),
+                                //     Response::Err(e) => println!("Error executing query: {}", format_err(&e)),
+                                //     Response::InternalErr(e) => println!("got {}", e),
+                                //     Response::Eof => println!("got eof")
+                                // };  
                             }, 
                             Response::Err(e) => println!("Error authenticating: {}", format_err(&e)),
                             Response::InternalErr(msg)=> println!("error: {}", msg),
