@@ -1,5 +1,6 @@
 pub mod protocol;
 pub mod io;
+pub mod query;
 
 pub mod client {
     use std::net::{TcpStream};
@@ -10,7 +11,8 @@ pub mod client {
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
     use super::io::client::MySqlClient;
-    use super::protocol::response::{Response, QueryResponse};
+    use super::protocol::response::{Response};
+    use super::query::{QueryResult, MasterStatus};
 
     pub fn connect() {
         let username = "user".to_string();
@@ -53,10 +55,9 @@ pub mod client {
                             Response::Ok(_) => {
                                 println!("auth ok");
 
-                                match stream.query("SHOW MASTER STATUS;".to_string()) {
-                                    QueryResponse::Ok(res) => println!("result: {:?}", res),
-                                    QueryResponse::Err(e) => println!("Error executing query: {}", format_err(&e)),
-                                    QueryResponse::InternalErr(e) => println!("internal error executing query: {:?}", e)
+                                match stream.query::<MasterStatus>("SHOW MASTER STATUS;".to_string()) {
+                                    QueryResult::Ok(res) => println!("status: {:?}", res),
+                                    QueryResult::Err(e) => println!("Error executing query: {}", e),
                                 };
                             }, 
                             Response::Err(e) => println!("Error authenticating: {}", format_err(&e)),

@@ -7,12 +7,12 @@ use crate::protocol::command::query::{Query};
 use crate::protocol::{buffer::Buffer, buffer::reader::BufferReader};
 use crate::io::{writer::write_message, reader::read_generic_message, reader::read_buffer};
 use crate::protocol::error::MySqlErr;
-
+use crate::query::{QueryResultReader, QueryResult};
 
 pub trait MySqlClient {
     fn send<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res>;
 
-    fn query(&mut self, query: String) -> QueryResponse;
+    fn query<Res: QueryResultReader>(&mut self, query: String) -> QueryResult<Box<Res>>;
 }
 
 impl MySqlClient for TcpStream {
@@ -26,14 +26,14 @@ impl MySqlClient for TcpStream {
         }
     }
 
-    fn query(&mut self, query: String) -> QueryResponse {
+    fn query<Res: QueryResultReader>(&mut self, query: String) -> QueryResult<Box<Res>> {
         write_message(&mut Query {
             query: query
         }, self, 0);
     
         let mut bytes = [0 as u8; 256];      
    
-        match self.read(&mut bytes) {
+        let query_response = match self.read(&mut bytes) {
             Ok(_) => {
                 println!("stream read: {:?}", bytes.to_vec());
                 let mut buffer = Buffer::from_bytes(&bytes);
@@ -52,21 +52,24 @@ impl MySqlClient for TcpStream {
                     println!("{:?}", column_defs);
 
                     match read_response::<Eof>(&mut buffer) {
-                        Response::Eof(eof) => println!("got eof {:?}", eof),
-                        _ => return QueryResponse::InternalErr(format!("error reading eof"))
-                    };
-
-                    match read_response::<ResultSet>(&mut buffer) {
-                        Response::Ok(res) => QueryResponse::Ok(res),
-                        Response::Err(e) => QueryResponse::Err(e),
-                        Response::InternalErr(e) => QueryResponse::InternalErr(e),
-                        _ => QueryResponse::InternalErr(format!("error reading result set"))
+                        Response::Eof(_) => match read_response::<ResultSet>(&mut buffer) {
+                            Response::Ok(res) => QueryResponse::Ok(res),
+                            Response::Err(e) => QueryResponse::Err(e),
+                            Response::InternalErr(e) => QueryResponse::InternalErr(e),
+                            _ => QueryResponse::InternalErr(format!("error reading result set"))
+                        },
+                        _ => QueryResponse::InternalErr(format!("error reading eof"))
                     }
                 } else {
                     QueryResponse::InternalErr(format!("error reading statement response, {:?}", statement_res))
                 }
             }
             Err(e) => QueryResponse::InternalErr(format!("Error reading from stream, {:?}", e)),
+        };
+        
+        match query_response {
+            QueryResponse::Ok(mut res) => Res::parse(&mut res),
+            _ => QueryResult::Err(format!("error reading result data"))
         }
     }
 }

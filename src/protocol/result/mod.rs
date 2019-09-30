@@ -116,12 +116,12 @@ impl Decoder for ColumnDefinition {
 
 #[derive(Debug)]
 pub struct ResultSet {
-    data: Vec<String>
+    pub data: Vec<String>
 }
 
 #[derive(Debug)]
 pub struct ResultSetRow {
-    values: Vec<String>
+    pub values: Vec<String>
 }
 
 impl Decoder for ResultSet {
