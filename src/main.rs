@@ -56,7 +56,7 @@ pub mod client {
                                 println!("auth ok");
 
                                 match stream.query::<MasterStatus>("SHOW MASTER STATUS;".to_string()) {
-                                    QueryResult::Ok(res) => println!("status: {:?}", res),
+                                    QueryResult::Ok(res) => println!("binlog file: {}, binlog position: {}", res.binlog_file, res.binlog_position),
                                     QueryResult::Err(e) => println!("Error executing query: {}", e),
                                 };
                             }, 
