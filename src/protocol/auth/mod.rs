@@ -17,6 +17,17 @@ pub struct Handshake {
     pub capability_flags: i16,
 }
 
+#[derive(Debug)]
+pub struct AuthOk {
+
+}
+
+impl Decoder for AuthOk {
+    fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
+        Ok(Box::new(AuthOk{}))
+    }
+}
+
 impl Decoder for Handshake {
     fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
         Ok(Box::new(Handshake {

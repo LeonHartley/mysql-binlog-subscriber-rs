@@ -9,12 +9,12 @@ use crate::protocol::error::MySqlErr;
 
 
 pub trait MySqlClient {
-    fn sql_msg<Req: Encoder, Res: Decoder, F>(&mut self, msg: &mut Req) -> Response<Res>;
+    fn sql_msg<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res>;
 }
 
 impl MySqlClient for TcpStream {
-    fn sql_msg<Req: Encoder, Res: Decoder, F>(&mut self, msg: &mut Req) -> Response<Res> {
-        write_message(msg, self, 0);
+    fn sql_msg<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res> {
+        write_message(msg, self, sequence);
     
         let mut query_res = [0 as u8; 256];
         match self.read(&mut query_res) {
@@ -29,7 +29,11 @@ impl MySqlClient for TcpStream {
                                 Ok(msg) => Response::Err(msg),
                                 Err(e) => Response::InternalErr(format!("Error reading error response, {:?}", e)),
                             },
-                            _ =>  Response::InternalErr(format!("got response: {}", String::from_utf8_lossy(&query_res)))
+                            0x00 /*OK*/ => match read_generic_message::<Res>(&mut msg) {
+                                Ok(msg) => Response::Ok(msg),
+                                Err(e) => Response::InternalErr(format!("Error reading ok response, {:?}", e)),
+                            },
+                            _ => Response::InternalErr(format!("unknown response type"))
                         }
                         Err(e) => Response::InternalErr(format!("Error reading response type, {:?}", e)),
                     },
