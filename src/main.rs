@@ -1,12 +1,13 @@
 pub mod protocol;
 pub mod io;
 pub mod query;
+pub mod event;
 
 pub mod client {
     use std::net::{TcpStream};
     use std::io::{Read};
 
-    use super::protocol::{auth::{Handshake, HandshakeResponse, AuthOk}, buffer::Buffer};
+    use super::protocol::{auth::{Handshake, HandshakeResponse, AuthOk}, buffer::Buffer, command::binlog::DumpBinaryLog};
     use super::io::{reader::read_message};
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
@@ -17,6 +18,8 @@ pub mod client {
     pub fn connect() {
         let username = "user".to_string();
         let database = "cometsrv".to_string();
+
+        let mut binlog_connected: bool = false;
 
         match TcpStream::connect("localhost:3306") {
             Ok(mut stream) => {
@@ -56,7 +59,24 @@ pub mod client {
                                 println!("auth ok");
 
                                 match stream.query::<MasterStatus>("SHOW MASTER STATUS;".to_string()) {
-                                    QueryResult::Ok(res) => println!("binlog file: {}, binlog position: {}", res.binlog_file, res.binlog_position),
+                                    QueryResult::Ok(res) => {
+                                        println!("binlog file: {}, binlog position: {}", res.binlog_file, res.binlog_position);
+
+                                        // request binlog stream
+                                        match stream.send::<DumpBinaryLog, AuthOk>(&mut DumpBinaryLog {
+                                            server_id: 2, 
+                                            file: res.binlog_file,
+                                            position: res.binlog_position
+                                        }, 0) {
+                                            Response::Ok(_) => {
+                                                binlog_connected = true;
+                                                println!("binlog connected")
+                                            },
+                                            Response::Err(e) => println!("error sending binlog command: {}", format_err(&e)),
+                                            Response::InternalErr(msg) => println!("error: {}", msg),
+                                            Response::Eof(_) => println!("eof")
+                                        };
+                                    },
                                     QueryResult::Err(e) => println!("Error executing query: {}", e),
                                 };
                             }, 
@@ -66,12 +86,27 @@ pub mod client {
                         }
                     },
                     Err(e) => println!("Failed to receive data: {}", e)
+                };
+
+                while binlog_connected {
+                    let mut data = [0 as u8; 128];
+                    match stream.read(&mut data) {
+                        Ok(n) => {
+                            if data[0] != 0 {
+                                println!("received data {:?}", data.to_vec());
+                            }
+                        },
+                        _=> { println!("lol?")}
+                    };
+
+                    std::thread::sleep(std::time::Duration::from_millis(1));
                 }
             },
             Err(e) => {
                 println!("Failed to connect: {}", e);
             }
         }
+
 
         println!("connection terminated");
     }
