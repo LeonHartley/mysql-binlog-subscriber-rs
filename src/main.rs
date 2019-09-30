@@ -92,6 +92,7 @@ pub mod client {
                     let mut data = [0 as u8; 128];
                     match stream.read(&mut data) {
                         Ok(n) => {
+                            println!("{:?}", String::from_utf8_lossy(&mut data));
                             if data[0] != 0 {
                                 println!("received data {:?}", data.to_vec());
                             }

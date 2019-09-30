@@ -19,7 +19,7 @@ impl MySqlClient for TcpStream {
     fn send<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res> {
         write_message(msg, self, sequence);
     
-        let mut query_res = [0 as u8; 256];
+        let mut query_res = [0 as u8; 1024];
         match self.read(&mut query_res) {
             Ok(_) => read_response(&mut Buffer::from_bytes(&query_res)),
             Err(e) =>  Response::InternalErr(format!("Error reading response buffer, {:?}", e)),
@@ -31,7 +31,7 @@ impl MySqlClient for TcpStream {
             query: query
         }, self, 0);
     
-        let mut bytes = [0 as u8; 1024*10];      
+        let mut bytes = [0 as u8; 2048];      
         let query_response = match self.read(&mut bytes) {
             Ok(_) => {
                 // println!("stream read: {:?}", bytes.to_vec());
