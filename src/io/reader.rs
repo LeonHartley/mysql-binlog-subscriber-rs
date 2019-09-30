@@ -17,7 +17,7 @@ pub fn read_buffer(buffer: &mut Buffer) -> Result<Buffer, DecodeErr> {
     } else {
         match buffer.read_bytes(length as usize) {
             Ok(bytes) => {
-                println!("lol: {:?}", bytes);
+                println!("read bytes: {}", length);
                 Ok(Buffer::from_bytes(bytes.as_ref()))
             },
             Err(e) => Err(DecodeErr::Err(format!("failed to decode length, {:?}", e)))

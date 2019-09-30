@@ -11,7 +11,7 @@ pub mod client {
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
     use super::io::client::MySqlClient;
-    use super::protocol::response::Response;
+    use super::protocol::response::{Response, QueryResponse};
 
     pub fn connect() {
         let username = "user".to_string();
@@ -54,17 +54,14 @@ pub mod client {
                             Response::Ok(_) => {
                                 println!("auth ok");
 
-                                match stream.send::<Query, ResultSet>(&mut Query {
-                                    query: "SHOW MASTER STATUS;".to_string()
-                                }, 0) {
-                                    Response::Ok(res) => println!("result: {:?}", res),
-                                    Response::Err(e) => println!("Error executing query: {}", format_err(&e)),
-                                    Response::InternalErr(e) => println!("got {}", e),
-                                    Response::Eof => println!("eof")
-                                };  
+                                match stream.query("SHOW MASTER STATUS;".to_string()) {
+                                    QueryResponse::Ok(res) => println!("result: {:?}", res),
+                                    QueryResponse::Err(e) => println!("Error executing query: {}", format_err(&e)),
+                                    QueryResponse::InternalErr(e) => println!("error: {:?}", e)
+                                };
                             }, 
                             Response::Err(e) => println!("Error authenticating: {}", format_err(&e)),
-                            Response::InternalErr(msg)=> println!("error: {}", msg),
+                            Response::InternalErr(msg) => println!("error: {}", msg),
                             Response::Eof => println!("eof, auth not supported")
                         }
                     },
