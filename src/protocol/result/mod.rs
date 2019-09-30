@@ -128,7 +128,7 @@ impl Decoder for ResultSet {
     fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
         let mut rows = vec!{};
 
-        while buffer.readable_bytes() > 1 {
+        while buffer.readable_bytes() > 0 {
             if let Ok(value) = buffer.read_packed_str() {
                 rows.push(value);
             }
