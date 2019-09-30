@@ -12,7 +12,9 @@ pub fn read_buffer(buffer: &mut Buffer) -> Result<Buffer, DecodeErr> {
         Err(e) => return Err(DecodeErr::Err(format!("failed to decode sequence, {:?}", e)))
     };
 
-    if length <= 0 {
+    println!("length={}, readableBytes={}", length, buffer.readable_bytes());
+
+    if length < 0 {
         Err(DecodeErr::Err(format!("failed to decode message, length={}", length)))
     } else {
         match buffer.read_bytes(length as usize) {

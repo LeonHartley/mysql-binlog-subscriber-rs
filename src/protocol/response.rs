@@ -1,11 +1,11 @@
 use super::decoder::Decoder;
 use super::error::MySqlErr;
-use super::result::ResultSet;
+use super::result::{Eof,ResultSet};
 
 #[derive(Debug)]
 pub enum Response<T: Decoder> {
     Ok(Box<T>),
-    Eof,
+    Eof(Box<Eof>),
     Err(Box<MySqlErr>),
     InternalErr(String)
 }

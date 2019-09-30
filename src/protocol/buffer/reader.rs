@@ -36,6 +36,8 @@ pub trait BufferReader {
     fn read_str(&mut self) -> Result<String, IoErr>;
 
     fn read_str_len(&mut self, len: usize) -> Result<String, IoErr>;
+
+    fn read_packed_str(&mut self) -> Result<String, IoErr>;
 }
 
 impl BufferReader for Buffer {  
@@ -67,6 +69,15 @@ impl BufferReader for Buffer {
         } else {
             Err(IoErr::ReadErr(format!("failed to read packed number, i = {}", i)))
         }
+    }
+
+    fn read_packed_str(&mut self) -> Result<String, IoErr> {
+        let len = match self.read_packed_i64() {
+            Ok(l) => l,
+            Err(e) => return Err(e)
+        };
+
+        self.read_str_len(len as usize)        
     }
 
     fn read_i64(&mut self, len: usize) -> Result<i64, IoErr> {

@@ -5,9 +5,8 @@ pub mod client {
     use std::net::{TcpStream};
     use std::io::{Read};
 
-    use super::protocol::{auth::{Handshake, HandshakeResponse, AuthOk}, result::ResultSet, buffer::Buffer};
+    use super::protocol::{auth::{Handshake, HandshakeResponse, AuthOk}, buffer::Buffer};
     use super::io::{reader::read_message};
-    use super::protocol::command::query::Query;
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
     use super::io::client::MySqlClient;
@@ -57,12 +56,12 @@ pub mod client {
                                 match stream.query("SHOW MASTER STATUS;".to_string()) {
                                     QueryResponse::Ok(res) => println!("result: {:?}", res),
                                     QueryResponse::Err(e) => println!("Error executing query: {}", format_err(&e)),
-                                    QueryResponse::InternalErr(e) => println!("error: {:?}", e)
+                                    QueryResponse::InternalErr(e) => println!("internal error executing query: {:?}", e)
                                 };
                             }, 
                             Response::Err(e) => println!("Error authenticating: {}", format_err(&e)),
                             Response::InternalErr(msg) => println!("error: {}", msg),
-                            Response::Eof => println!("eof, auth not supported")
+                            Response::Eof(_) => println!("eof, auth not supported")
                         }
                     },
                     Err(e) => println!("Failed to receive data: {}", e)
