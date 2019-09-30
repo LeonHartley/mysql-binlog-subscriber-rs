@@ -7,9 +7,10 @@ pub mod client {
 
     use super::protocol::{auth::{Handshake, HandshakeResponse}, buffer::Buffer, buffer::reader::BufferReader};
     use super::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
+    use super::protocol::command::query::Query;
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
-    use super::protocol::command::query::Query;
+    use super::io::client::MySqlClient;
 
     pub fn connect() {
         let username = "user".to_string();
@@ -60,37 +61,13 @@ pub mod client {
                                             0x00 /*OK*/ => {
                                                 println!("auth ok");
 
-                                                write_message(&mut Query {
+                                                match stream.sql_msg::<Query, MySqlErr>(&mut Query {
                                                     query: "SHOW MASTER STATUS;".to_string()
-                                                }, &mut stream, 0);
-                                            
-                                                let mut query_res = [0 as u8; 256];
-                                                match stream.read(&mut query_res) {
-                                                    Ok(_) => {
-                                                        let mut query_buf = Buffer::from_bytes(&query_res);
-                                                        println!("{:?}", query_res.to_vec());
-   
-                                                        match read_buffer(&mut query_buf) {
-                                                            Ok(mut msg) => match msg.read_u8() {
-                                                                Ok(b) => match b {
-                                                                    0xFF /*ERROR*/ => match read_generic_message::<MySqlErr>(&mut msg) {
-                                                                        Ok(msg) => println!("ERROR {} {}: {}", msg.code, match msg.state {
-                                                                            Some(state) => format!("({})", state),
-                                                                            None => format!("(unknown)")
-                                                                        }, msg.message),
-                                                                        Err(e) => println!("error parsing error {:?}", e)
-                                                                    },
-                                                                    _ => println!("received response: {:?}", String::from_utf8_lossy(&query_res))
-                                                                }
-                                                                Err(_) => println!("err 0"),
-                                                            },
-                                                            Err(e) => println!("{:?}", e),
-                                                        }
-
-                                                    },
-                                                    Err(_) => {}
-                                                };
-
+                                                }) {
+                                                    Ok(m) => println!("top kek"),
+                                                    Err(e) => println!("got sql error"),
+                                                    _ => println!("lol topkek")
+                                                };                                             
                                             },
                                             0xFE /*EOF, CHANGE AUTH PROTOCOL*/ => println!("change auth protocol..."),
                                             0xFF /*ERROR*/ => match read_generic_message::<MySqlErr>(&mut msg) {
