@@ -3,16 +3,16 @@ use super::decoder::{DecodeErr, Decoder};
 
 #[derive(Debug)]
 pub enum EventType {
-    Unknown = 0,
-    Start = 1,
-    Query = 2,
-    Stop = 3,
-    Xid = 16,
-    TableMap = 19,
-    WriteRows = 23,
-    UpdateRows = 24,
-    DeleteRows = 25,
-    Heartbeat = 26,
+    Unknown,
+    Start,
+    Query,
+    Stop,
+    Xid,
+    TableMap,
+    WriteRows,
+    UpdateRows,
+    DeleteRows,
+    Heartbeat
 }
 
 #[derive(Debug)]
@@ -67,7 +67,7 @@ impl Into<EventType> for u8 {
             23 => EventType::WriteRows,
             24 => EventType::UpdateRows,
             25 => EventType::DeleteRows,
-            25 => EventType::Heartbeat,
+            26 => EventType::Heartbeat,
             _ => EventType::Unknown
         }
     }
