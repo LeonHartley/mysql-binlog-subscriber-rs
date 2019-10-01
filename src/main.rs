@@ -1,13 +1,12 @@
 pub mod protocol;
 pub mod io;
 pub mod query;
-pub mod event;
 
 pub mod client {
     use std::net::{TcpStream};
     use std::io::{Read};
 
-    use super::protocol::{auth::{Handshake, HandshakeResponse, AuthOk}, buffer::Buffer, command::binlog::DumpBinaryLog};
+    use super::protocol::{auth::{Handshake, HandshakeResponse, Ok}, buffer::Buffer, command::binlog::DumpBinaryLog};
     use super::io::{reader::read_message};
     use super::protocol::error::MySqlErr;
     use super::protocol::auth::capabilities::{CLIENT_PROTOCOL_41,CLIENT_LONG_FLAG,CLIENT_CONNECT_WITH_DB,CLIENT_SECURE_CONNECTION};
@@ -40,7 +39,7 @@ pub mod client {
                         println!("mysql handshake received\n{:?}", msg);
                         println!("attempting authentication, username={}", username);
 
-                        let auth_res = stream.send::<HandshakeResponse, AuthOk>( &mut HandshakeResponse {
+                        let auth_res = stream.send::<HandshakeResponse, Ok>( &mut HandshakeResponse {
                             capability_flags: 
                                 CLIENT_PROTOCOL_41 | 
                                 CLIENT_LONG_FLAG | 
@@ -63,7 +62,7 @@ pub mod client {
                                         println!("binlog file: {}, binlog position: {}", res.binlog_file, res.binlog_position);
 
                                         // request binlog stream
-                                        match stream.send::<DumpBinaryLog, AuthOk>(&mut DumpBinaryLog {
+                                        match stream.send::<DumpBinaryLog, Ok>(&mut DumpBinaryLog {
                                             server_id: 2, 
                                             file: res.binlog_file,
                                             position: res.binlog_position

@@ -59,7 +59,7 @@ impl Decoder for ColumnDefinition {
     fn decode(buffer: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
         Ok(Box::new(ColumnDefinition {
             catalog: match buffer.read_packed_str() {
-                Ok(version) => version,
+                Ok(catalog) => catalog,
                 Err(e) => return Err(DecodeErr::Err(format!("error decoding catalog, {:?}", e)))
             },
             schema: match buffer.read_packed_str() {

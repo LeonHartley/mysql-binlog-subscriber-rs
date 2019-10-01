@@ -18,13 +18,13 @@ pub struct Handshake {
 }
 
 #[derive(Debug)]
-pub struct AuthOk {
+pub struct Ok {
 
 }
 
-impl Decoder for AuthOk {
+impl Decoder for Ok {
     fn decode(_: &mut Buffer) -> Result<Box<Self>, DecodeErr> {
-        Ok(Box::new(AuthOk{}))
+        Ok(Box::new(Ok{}))
     }
 }
 
