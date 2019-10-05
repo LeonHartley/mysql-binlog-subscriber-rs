@@ -29,26 +29,12 @@ mod test {
         });
         
         if let MySqlConnectResult::Ok(mut client) = builder.connect() {
-            while binlog_connected {
-                let mut data = [0 as u8; 1024*100];
-                match client.stream.read(&mut data) {
-                    Ok(n) => {
-                        let mut buffer = Buffer::from_bytes(&data);
-                        while buffer.readable_bytes() > 0 {
-                            match read_response::<EventHeader>(&mut buffer) {
-                                Response::Ok(header) => {
-                                    
-                                    println!("got an event, type = {:?}", header);
-                                },
-                                _ => println!("got something else")
-                            };
-                        }
-                    }
-                    _ => { println!("err reading binlog") }
-                };
-
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            }
+            match client.query::<MasterStatus>("SHOW MASTER STATUS;".to_string()) {
+                QueryResult::Ok(res) => {
+                    println!("binlog file: {}, binlog position: {}", res.binlog_file, res.binlog_position);
+                },
+                QueryResult::Err(e) => println!("Error executing query: {}", e),
+            };
         }
     }
 }
