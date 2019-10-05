@@ -1,21 +1,56 @@
 use std::net::{TcpStream};
 use std::io::{Read};
-use crate::protocol::{encoder::Encoder, decoder::Decoder};
+use crate::protocol::{auth::{Handshake, HandshakeResponse, Ok}, encoder::Encoder, decoder::Decoder};
 use crate::protocol::response::{Response, QueryResponse};
 use crate::protocol::result::{ResultSet, StatementStatus, ColumnDefinition, Eof};
 use crate::protocol::command::query::{Query};
 use crate::protocol::{buffer::Buffer, buffer::reader::BufferReader};
-use crate::io::{writer::write_message, reader::read_generic_message, reader::read_buffer};
+use crate::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
 use crate::protocol::error::MySqlErr;
 use crate::query::{QueryResultReader, QueryResult};
+use crate::options::MySqlOptions;
+use crate::protocol::auth::capabilities::{CLIENT_PROTOCOL_41, CLIENT_LONG_FLAG, CLIENT_CONNECT_WITH_DB, CLIENT_SECURE_CONNECTION};
 
-pub trait MySqlClient {
+pub trait MySqlClientStream {
+    fn authenticate(&mut self, options: &MySqlOptions) -> Response<Ok>;
+
     fn send<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res>;
 
     fn query<Res: QueryResultReader>(&mut self, query: String) -> QueryResult<Box<Res>>;
 }
 
-impl MySqlClient for TcpStream {
+impl MySqlClientStream for TcpStream {
+    fn authenticate(&mut self, options: &MySqlOptions) -> Response<Ok> {
+        let mut data = [0 as u8; 128];
+        match self.read(&mut data) {
+            Ok(_) => {
+                let mut buffer = Buffer::from_bytes(&data);
+                let msg = match read_message::<Handshake>(&mut buffer) {
+                    Ok(m) => m,
+                    Err(err) => return Response::InternalErr(format!("Error decoding handshake message, {:?}", err))
+                };
+
+                println!("mysql handshake received\n{:?}", msg);
+                println!("attempting authentication, username={}", options.username);
+
+                self.send::<HandshakeResponse, Ok>(&mut HandshakeResponse {
+                    capability_flags:
+                    CLIENT_PROTOCOL_41 |
+                        CLIENT_LONG_FLAG |
+                        CLIENT_CONNECT_WITH_DB |
+                        CLIENT_SECURE_CONNECTION,
+                    max_packet_size: 0,
+                    character_set: msg.character_set,
+                    reserved: vec! {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    auth_data: vec! {},
+                    username: options.username.clone(),
+                    database: "information_schema".to_string(),
+                }, 1)
+            },
+            _ => Response::InternalErr("error reading from stream".into())
+        }
+    }
+
     fn send<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res> {
         write_message(msg, self, sequence);
     
