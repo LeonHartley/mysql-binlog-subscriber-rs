@@ -74,7 +74,7 @@ impl MySqlClient for TcpStream {
     }
 }
 
-fn read_response<Res: Decoder>(buffer: &mut Buffer) -> Response<Res> {
+pub fn read_response<Res: Decoder>(buffer: &mut Buffer) -> Response<Res> {
     match read_buffer(buffer) {
         Ok(mut msg) => match msg.peek() {
             0xFF /*ERROR*/ => {
