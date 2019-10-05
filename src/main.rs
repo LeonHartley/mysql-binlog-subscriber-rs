@@ -19,13 +19,14 @@ mod test {
             password: "".into(),
         });
         
-        if let MySqlConnectResult::Ok(mut client) = builder.connect() {
-            match client.query::<MasterStatus>("SHOW MASTER STATUS;".to_string()) {
+        match builder.connect() {
+            MySqlConnectResult::Ok(mut client) => match client.query::<MasterStatus>("SHOW MASTER STATUS;".to_string()) {
                 QueryResult::Ok(res) => {
                     println!("binlog file: {}, binlog position: {}", res.binlog_file, res.binlog_position);
                 },
                 QueryResult::Err(e) => println!("Error executing query: {}", e),
-            };
+            },
+            MySqlConnectResult::Err(err) => println!("Error connecting to MySQL: {}", err)
         }
     }
 }
