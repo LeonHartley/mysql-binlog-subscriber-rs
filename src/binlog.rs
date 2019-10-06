@@ -6,6 +6,8 @@ use crate::query::MasterStatus;
 use crate::io::stream::{next_buffer, MySqlClientStream};
 use crate::query::QueryResult;
 use crate::protocol::{buffer::reader::BufferReader, response::Response};
+use crate::protocol::event::EventHeader;
+use crate::io::stream::read_response;
 
 pub trait MySqlBinlogStream {
     // eventually this will take a handler as an argument 
@@ -24,7 +26,7 @@ impl MySqlBinlogStream for MySqlClient {
         println!("{:?}", master_status);
 
         // flush the read buffer (hack for now till we handle all msgs)
-        let mut bytes = [0 as u8, 100^10];
+        let mut bytes = [0 as u8; 1024*3];
         let _ = self.stream.read(&mut bytes);
 
         match self.send::<DumpBinaryLog, Ok>(&mut DumpBinaryLog {
@@ -41,19 +43,18 @@ impl MySqlBinlogStream for MySqlClient {
             Response::Eof(eof) => println!("eof {:?}", eof)
         };
 
-        // while binlog_connected {
-        //     let mut buffer = next_buffer(&mut self.stream);
-        //     while buffer.readable_bytes() > 0 {
-        //         println!("read bytes: {}", buffer.readable_bytes());
-        //         // match read_response::<EventHeader>(&mut buffer) {
-        //         //     Response::Ok(header) => {
-        //         //         println!("got an event, type = {:?}", header);
-        //         //     },
-        //         //     _ => println!("got something else")
-        //         // };
-        //     }
+        while binlog_connected {
+            let mut buffer = next_buffer(&mut self.stream);
+            println!("read bytes: {}", buffer.readable_bytes());
 
-        //     std::thread::sleep_ms(1);
-        // }
+            match read_response::<EventHeader>(&mut buffer) {
+                Response::Ok(header) => {
+                    println!("got an event, type = {:?}, bytes left: {}", header, buffer.readable_bytes());
+                },
+                _ => println!("got something else")
+            };
+
+            std::thread::sleep(std::time::Duration::from_millis(1))
+        }
     }
 }

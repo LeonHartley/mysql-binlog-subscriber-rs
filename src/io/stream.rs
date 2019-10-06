@@ -1,7 +1,7 @@
 use std::net::{TcpStream};
 use std::io::{Read};
 use crate::protocol::{auth::{Handshake, HandshakeResponse, Ok}, encoder::Encoder, decoder::Decoder};
-use crate::protocol::response::{Response, QueryResponse};
+use crate::protocol::response::{Response};
 use crate::protocol::result::{ResultSet, StatementStatus, ColumnDefinition, Eof};
 use crate::protocol::command::query::{Query};
 use crate::protocol::{buffer::Buffer, buffer::reader::BufferReader};
@@ -49,7 +49,7 @@ impl MySqlClientStream for TcpStream {
     fn send<Req: Encoder, Res: Decoder>(&mut self, msg: &mut Req, sequence: i32) -> Response<Res> {
         write_message(msg, self, sequence);
 
-        read_response(self)
+        read_response(&mut next_buffer(self))
     }
 
     fn query<Res: QueryResultReader>(&mut self, query: String) -> QueryResult<Box<Res>> {
@@ -57,7 +57,8 @@ impl MySqlClientStream for TcpStream {
             query: query
         }, self, 0);
 
-        let statement_res = match read_response::<StatementStatus>(self) {
+        let mut msg = next_buffer(self);
+        let statement_res = match read_response::<StatementStatus>(&mut msg) {
             Response::Ok(res) => res,
             _ => return QueryResult::Err(format!("Error reading statement response"))
         };
@@ -65,7 +66,8 @@ impl MySqlClientStream for TcpStream {
         let mut column_defs = vec!{};
 
         for _ in 0..statement_res.column_count {
-            let column_msg = read_response::<ColumnDefinition>(self);
+            let mut msg = next_buffer(self);
+            let column_msg = read_response::<ColumnDefinition>(&mut msg);
             if let Response::Ok(res) = column_msg {
                 column_defs.push(res);
             }
@@ -73,12 +75,16 @@ impl MySqlClientStream for TcpStream {
 
         println!("{:?}", column_defs);
 
-        match read_response::<Eof>(self) {
-            Response::Eof(_) => match read_response::<ResultSet>(self) {
-                Response::Ok(mut res) => Res::parse(&mut res),
-                Response::Err(e) => QueryResult::Err(format!("error executing query, {:?}", e)),
-                Response::InternalErr(e) => QueryResult::Err(format!("internal error reading result data, {:?}", e)),
-                _ => QueryResult::Err(format!("error reading result set"))
+        let mut msg = next_buffer(self);
+        match read_response::<Eof>(&mut msg) {
+            Response::Eof(_) => {
+                let mut msg = next_buffer(self);
+                match read_response::<ResultSet>(&mut msg) {
+                    Response::Ok(mut res) => Res::parse(&mut res),
+                    Response::Err(e) => QueryResult::Err(format!("error executing query, {:?}", e)),
+                    Response::InternalErr(e) => QueryResult::Err(format!("internal error reading result data, {:?}", e)),
+                    _ => QueryResult::Err(format!("error reading result set"))
+                }
             },
             _ => QueryResult::Err(format!("error reading eof"))
         }
@@ -120,19 +126,18 @@ pub fn next_buffer(stream: &mut TcpStream) -> Buffer {
     }
 }
 
-pub fn read_response<Res: Decoder>(stream: &mut TcpStream) -> Response<Res> {
-    let mut msg = next_buffer(stream);
+pub fn read_response<Res: Decoder>(msg: &mut Buffer) -> Response<Res> {
      match msg.peek() {
         0xFF /*ERROR*/ => {
             msg.skip(1);
-            match read_generic_message::<MySqlErr>(&mut msg) {
+            match read_generic_message::<MySqlErr>(msg) {
                 Ok(msg) => Response::Err(msg),
                 Err(e) => Response::InternalErr(format!("Error reading error response, {:?}", e)),
             }
         },
         0xFE /*EOF*/ => {
             msg.skip(1);
-            match read_generic_message::<Eof>(&mut msg) {
+            match read_generic_message::<Eof>(msg) {
                 Ok(msg) => Response::Eof(msg),
                 Err(e) => Response::InternalErr(format!("Error reading error response, {:?}", e)),
             }
@@ -142,7 +147,7 @@ pub fn read_response<Res: Decoder>(stream: &mut TcpStream) -> Response<Res> {
                 msg.skip(1);
             }
 
-            match read_generic_message::<Res>(&mut msg) {
+            match read_generic_message::<Res>(msg) {
                 Ok(msg) => Response::Ok(msg),
                 Err(e) => Response::InternalErr(format!("Error reading ok response, {:?}", e)),
             }
