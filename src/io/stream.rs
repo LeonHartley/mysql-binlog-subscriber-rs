@@ -88,24 +88,35 @@ impl MySqlClientStream for TcpStream {
 pub fn next_buffer(stream: &mut TcpStream) -> Buffer {
     let mut bytes = [0 as u8; 4];      
     match stream.read(&mut bytes) {
-        Ok(_) => {
+        Ok(n) => {
+            if n == 0 {
+                return Buffer::empty();
+            }
+
             let mut buffer = Buffer::from_bytes(&bytes);
             let length = match buffer.read_i32(3) {
                 Ok(n) => n as u64,
                 Err(_) => return buffer
             };
 
+            println!("length = {}", length);
+            
             let _sequence = buffer.read_u8();
 
             let mut buf = vec![];
             let mut chunk = stream.take(length);
             if let Ok(_) = chunk.read_to_end(&mut buf) {
+                println!("{:?}", &buf);
                 Buffer::from_bytes(buf.as_slice())
             }  else {
+                println!("couldn't read {} bytes", length);
                 Buffer::empty()
             }
         }, 
-        Err(_) => Buffer::empty()
+        Err(e) => {
+            println!("error: {:?}", e);
+            Buffer::empty()
+        }
     }
 }
 

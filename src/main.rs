@@ -1,16 +1,15 @@
 pub mod protocol;
 pub mod io;
 pub mod query;
-pub mod event;
+pub mod binlog;
 pub mod builder;
 pub mod options;
 pub mod client;
 
 mod test {
-    use super::io::stream::MySqlClientStream;
-    use super::query::{QueryResult, MasterStatus};
     use super::options::MySqlOptions;
     use super::builder::{MySqlClientBuilder, MySqlConnectResult};
+    use super::binlog::MySqlBinlogStream;
 
     pub fn connect() {
         let mut client = match MySqlClientBuilder::new(MySqlOptions {
@@ -22,14 +21,9 @@ mod test {
             MySqlConnectResult::Err(msg) => panic!("couldn't connect to mysql, error: {}", msg)
         };
         
-        let master_status = match client.query::<MasterStatus>("SHOW MASTER STATUS;".to_string()) {
-            QueryResult::Ok(res) => res,
-            QueryResult::Err(e) => panic!("Error executing query: {}", e),
-        };
+        println!("starting binlog stream..");
 
-        println!("binlog file: {}, binlog position: {}", 
-            master_status.binlog_file,
-            master_status.binlog_position);
+        client.binlog_listen()
     }
 }
 
