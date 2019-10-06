@@ -1,4 +1,4 @@
-use crate::protocol::buffer::{Buffer, reader::BufferReader};
+use crate::protocol::buffer::{Buffer};
 use crate::protocol::decoder::{Decoder, DecodeErr};
 
 pub fn read_message<T: Decoder>(buffer: &mut Buffer) -> Result<Box<T>, DecodeErr> {
