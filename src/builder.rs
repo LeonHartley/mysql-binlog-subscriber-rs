@@ -1,11 +1,6 @@
 use std::net::TcpStream;
-use std::io::Read;
 use super::{options::MySqlOptions, client::MySqlClient};
-use super::protocol::{auth::Ok, buffer::Buffer, buffer::reader::BufferReader, command::binlog::DumpBinaryLog, event::EventHeader};
-use super::io::stream::read_response;
-use super::protocol::error::MySqlErr;
 use super::io::stream::MySqlClientStream;
-use super::query::{QueryResult, MasterStatus};
 use super::protocol::response::{Response};
 
 pub struct MySqlClientBuilder {

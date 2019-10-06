@@ -1,12 +1,7 @@
 use std::net::TcpStream;
 use crate::io::stream::MySqlClientStream;
-use crate::protocol::{auth::{Handshake, HandshakeResponse, Ok}, encoder::Encoder, decoder::Decoder};
-use crate::protocol::response::{Response, QueryResponse};
-use crate::protocol::result::{ResultSet, StatementStatus, ColumnDefinition, Eof};
-use crate::protocol::command::query::{Query};
-use crate::protocol::{buffer::Buffer, buffer::reader::BufferReader};
-use crate::io::{writer::write_message, reader::read_message, reader::read_generic_message, reader::read_buffer};
-use crate::protocol::error::MySqlErr;
+use crate::protocol::{auth::Ok, encoder::Encoder, decoder::Decoder};
+use crate::protocol::response::Response;
 use crate::query::{QueryResultReader, QueryResult};
 use crate::options::MySqlOptions;
 
